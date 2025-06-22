@@ -1,0 +1,82 @@
+Metadata-Version: 2.4
+Name: traceroot
+Version: 0.1.0
+Summary: A clean, principled wrapper around OpenTelemetry, AWS CloudWatch, and AWS X-Ray for enhanced debugging experience
+Home-page: https://github.com/your-org/traceroot
+Author: TraceRoot Team
+Author-email: 
+Project-URL: Bug Reports, https://github.com/your-org/traceroot/issues
+Project-URL: Source, https://github.com/your-org/traceroot
+Project-URL: Documentation, https://github.com/your-org/traceroot#readme
+Keywords: opentelemetry aws cloudwatch xray tracing logging debugging
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Topic :: System :: Logging
+Classifier: Topic :: System :: Monitoring
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Requires-Dist: opentelemetry-api>=1.20.0
+Requires-Dist: opentelemetry-sdk>=1.20.0
+Requires-Dist: opentelemetry-exporter-otlp-proto-http>=1.20.0
+Requires-Dist: boto3>=1.28.0
+Requires-Dist: watchtower>=3.0.0
+Requires-Dist: fastapi>=0.100.0
+Requires-Dist: opentelemetry-instrumentation-fastapi>=0.41b0
+Requires-Dist: pytest>=7.0.0
+Requires-Dist: pytest-asyncio>=0.21.0
+Requires-Dist: pandas
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0.0; extra == "dev"
+Requires-Dist: pytest-asyncio>=0.21.0; extra == "dev"
+Requires-Dist: black; extra == "dev"
+Requires-Dist: flake8; extra == "dev"
+Requires-Dist: mypy; extra == "dev"
+Provides-Extra: fastapi
+Requires-Dist: fastapi==0.115.12; extra == "fastapi"
+Requires-Dist: uvicorn==0.34.3; extra == "fastapi"
+Requires-Dist: pre-commit==4.2.0; extra == "fastapi"
+Requires-Dist: pytest==8.4.0; extra == "fastapi"
+Requires-Dist: httpx==0.27.0; extra == "fastapi"
+Requires-Dist: numpy; extra == "fastapi"
+Requires-Dist: opentelemetry-instrumentation-fastapi>=0.41b0; extra == "fastapi"
+Dynamic: author
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: keywords
+Dynamic: project-url
+Dynamic: provides-extra
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
+
+# TraceRoot
+
+TraceRoot is a clean, principled wrapper around OpenTelemetry, AWS CloudWatch, and AWS X-Ray for enhanced debugging experience. It provides smart logging and tracing for AWS-based applications with minimal setup.
+
+## Quick Start
+
+### Installation
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+export AWS_ACCESS_KEY_ID='your_access_key'
+export AWS_SECRET_ACCESS_KEY='your_secret_key'
+export AWS_DEFAULT_REGION='us-west-2'
+```
+
+### Running an example
+```bash
+python tests/test_e2e.py
+```
