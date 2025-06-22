@@ -30,7 +30,6 @@ from integrations.fastapi import connect_fastapi
 
 # Initialize tracing
 initialize_tracing(
-    service_name="complex-test-service",
     config=TraceRootConfig(
         service_name="complex-test-service",
         github_version="v0.1.0",

@@ -1,6 +1,5 @@
 """Configuration management for TraceRoot"""
 
-import os
 from dataclasses import dataclass
 from typing import Optional
 
@@ -11,21 +10,26 @@ class TraceRootConfig:
     
     # Service identification
     service_name: str
+    aws_region: str
+
+    # OpenTelemetry Configuration
+    otlp_endpoint: str
+
+    # version and environment
     github_version: str = "latest"
     environment: str = "development"
-    
-    # AWS Configuration
-    aws_region: str = "us-west-2"
+
+    # log group and stream name Configuration
     cloudwatch_log_group: Optional[str] = None
     cloudwatch_stream_name: Optional[str] = None
     
-    # OpenTelemetry Configuration  
-    otlp_endpoint: str = "http://localhost:4318/v1/traces"
+    # OpenTelemetry Configuration
+    otlp_endpoint: str
     
     # Tracing options
-    enable_console_export: bool = False
-    enable_cloudwatch_logs: bool = True
-    enable_xray_traces: bool = True
+    enable_console_export: bool = True
+    # enable_cloudwatch_logs: bool = True
+    # enable_xray_traces: bool = True
     
     def __post_init__(self):
         # Set default CloudWatch log group if not provided
