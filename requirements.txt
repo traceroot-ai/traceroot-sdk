@@ -1,0 +1,17 @@
+# Core OpenTelemetry dependencies
+opentelemetry-api>=1.20.0
+opentelemetry-sdk>=1.20.0
+opentelemetry-exporter-otlp-proto-http>=1.20.0
+
+# AWS dependencies
+boto3>=1.28.0
+watchtower>=3.0.0
+
+# FastAPI integration
+fastapi>=0.100.0
+opentelemetry-instrumentation-fastapi>=0.41b0
+
+# Optional: for development and testing
+pytest>=7.0.0
+pytest-asyncio>=0.21.0 
+pandas

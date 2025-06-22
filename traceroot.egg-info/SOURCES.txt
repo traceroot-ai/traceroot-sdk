@@ -1,0 +1,17 @@
+README.md
+setup.py
+integrations/__init__.py
+integrations/fastapi.py
+query/__init__.py
+query/client.py
+tests/test_e2e.py
+traceroot/__init__.py
+traceroot/config.py
+traceroot/logger.py
+traceroot/tracer.py
+traceroot.egg-info/PKG-INFO
+traceroot.egg-info/SOURCES.txt
+traceroot.egg-info/dependency_links.txt
+traceroot.egg-info/not-zip-safe
+traceroot.egg-info/requires.txt
+traceroot.egg-info/top_level.txt
