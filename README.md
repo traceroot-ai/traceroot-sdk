@@ -9,7 +9,7 @@ TraceRoot is a clean, principled wrapper around OpenTelemetry, AWS CloudWatch, a
 ```bash
 python3 -m venv venv
 source venv/bin/activate
-pip install -r requirements.txt
+pip install -e ".[dev,fastapi]"
 export AWS_ACCESS_KEY_ID='your_access_key'
 export AWS_SECRET_ACCESS_KEY='your_secret_key'
 export AWS_DEFAULT_REGION='us-west-2'
