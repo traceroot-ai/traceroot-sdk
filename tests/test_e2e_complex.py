@@ -12,8 +12,6 @@ This test file contains a sophisticated test scenario that exercises:
 """
 
 import asyncio
-import random
-import time
 from typing import List, Dict, Any
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -30,13 +28,13 @@ from integrations.fastapi import connect_fastapi
 
 # Initialize tracing
 initialize_tracing(
-    service_name="complex-test-service",
     config=TraceRootConfig(
         service_name="complex-test-service",
         github_version="v0.1.0",
         environment="test",
         aws_region="us-west-2",
         otlp_endpoint="http://localhost:4318/v1/traces",
+        enable_console_export=True,
     )
 )
 
