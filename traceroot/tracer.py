@@ -46,7 +46,6 @@ class TraceOptions:
 
 
 def initialize_tracing(
-    service_name: str,
     config: Optional[TraceRootConfig] = None,
 ) -> TracerProvider:
     """
@@ -56,23 +55,19 @@ def initialize_tracing(
     Call this once at the start of your application.
     
     Args:
-        service_name: Name of your service
         config: Optional TraceRootConfig. If not provided, will be created from environment variables.
         
     Returns:
         TracerProvider instance
         
     Example:
-        # Simple initialization
-        initialize_tracing("my-service")
-        
         # With custom config
         config = TraceRootConfig(
             service_name="my-service",
             environment="production",
             aws_region="us-east-1"
         )
-        initialize_tracing("my-service", config)
+        initialize_tracing(config)
     """
     global _tracer_provider, _config
     
@@ -104,11 +99,11 @@ def initialize_tracing(
         console_processor = SimpleSpanProcessor(ConsoleSpanExporter())
         provider.add_span_processor(console_processor)
     
-    if config.enable_xray_traces:
-        # OTLP exporter for X-Ray (via OpenTelemetry Collector)
-        otlp_exporter = OTLPSpanExporter(endpoint=config.otlp_endpoint)
-        batch_processor = BatchSpanProcessor(otlp_exporter)
-        provider.add_span_processor(batch_processor)
+    # if config.enable_xray_traces:
+    # OTLP exporter for X-Ray (via OpenTelemetry Collector)
+    otlp_exporter = OTLPSpanExporter(endpoint=config.otlp_endpoint)
+    batch_processor = BatchSpanProcessor(otlp_exporter)
+    provider.add_span_processor(batch_processor)
     
     # Set as global tracer provider
     otel_trace.set_tracer_provider(provider)

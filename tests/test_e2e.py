@@ -32,7 +32,6 @@ from traceroot.config import TraceRootConfig
 
 # Initialize tracing (call this once at startup)
 initialize_tracing(
-    service_name="example-service",
     config=TraceRootConfig(
         service_name="example-service",
         github_version="v0.1.0",

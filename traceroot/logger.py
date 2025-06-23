@@ -90,9 +90,9 @@ class TraceRootLogger:
         self.trace_filter = TraceIdFilter(config)
         
         # Setup handlers
-        self._setup_console_handler()
-        if config.enable_cloudwatch_logs:
-            self._setup_cloudwatch_handler()
+        if self.config.enable_console_export:
+            self._setup_console_handler()
+        self._setup_cloudwatch_handler()
     
     def _setup_console_handler(self):
         """Setup console logging handler"""
