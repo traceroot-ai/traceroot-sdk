@@ -95,9 +95,9 @@ def initialize_tracing(
     provider = TracerProvider(resource=resource)
     
     # Add span processors based on configuration
-    # if config.enable_console_export:
-    #     console_processor = SimpleSpanProcessor(ConsoleSpanExporter())
-    #     provider.add_span_processor(console_processor)
+    if config.enable_console_export:
+        console_processor = SimpleSpanProcessor(ConsoleSpanExporter())
+        provider.add_span_processor(console_processor)
     
     # if config.enable_xray_traces:
     # OTLP exporter for X-Ray (via OpenTelemetry Collector)
