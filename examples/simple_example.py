@@ -6,13 +6,13 @@ from traceroot.tracer import TraceOptions, initialize_tracing, trace
 
 initialize_tracing(
     service_name="example-service",
-    config=TraceRootConfig(
-        service_name="example-service",
-        github_version="v0.1.0",
-        environment="development",
-        aws_region="us-west-2",
-        otlp_endpoint="http://localhost:4318/v1/traces",
-    ),
+    config=TraceRootConfig(service_name="example-service",
+                           owner="example-owner",
+                           repo_name="example-repo",
+                           commit_hash="v0.1.0",
+                           environment="development",
+                           aws_region="us-west-2",
+                           otlp_endpoint="http://localhost:4318/v1/traces"),
 )
 
 logger = get_logger()
