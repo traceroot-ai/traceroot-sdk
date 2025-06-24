@@ -1,33 +1,17 @@
 #!/usr/bin/env python3
-"""Setup script for TraceRoot package."""
+"""Setup script for TraceRoot.AI SDK package."""
 
 import os
 
 from setuptools import find_packages, setup
 
 
-# Read the README file for long description
 def read_readme():
     readme_path = os.path.join(os.path.dirname(__file__), 'README.md')
     if os.path.exists(readme_path):
         with open(readme_path, encoding='utf-8') as f:
             return f.read()
     return ""
-
-
-# Read requirements from requirements.txt
-def read_requirements():
-    requirements_path = os.path.join(os.path.dirname(__file__),
-                                     'requirements.txt')
-    requirements = []
-    if os.path.exists(requirements_path):
-        with open(requirements_path, encoding='utf-8') as f:
-            for line in f:
-                line = line.strip()
-                # Skip comments and empty lines
-                if line and not line.startswith('#'):
-                    requirements.append(line)
-    return requirements
 
 
 setup(
@@ -57,7 +41,24 @@ setup(
         "Topic :: System :: Monitoring",
     ],
     python_requires=">=3.8",
-    install_requires=read_requirements(),
+    install_requires=[
+        "opentelemetry-api==1.34.1",
+        "opentelemetry-sdk==1.34.1",
+        "opentelemetry-exporter-otlp==1.34.1",
+        "opentelemetry-exporter-otlp-proto-common==1.34.1",
+        "opentelemetry-exporter-otlp-proto-grpc==1.34.1",
+        "opentelemetry-exporter-otlp-proto-http==1.34.1",
+        "opentelemetry-instrumentation==0.55b1",
+        "opentelemetry-instrumentation-asgi==0.55b1",
+        "opentelemetry-instrumentation-fastapi==0.55b1",
+        "opentelemetry-proto==1.34.1",
+        "opentelemetry-sdk-extension-aws==2.1.0",
+        "opentelemetry-propagator-aws-xray==1.0.2",
+        "opentelemetry-semantic-conventions==0.55b1",
+        "opentelemetry-util-http==0.55b1",
+        "watchtower==3.4.0",
+        "pandas==2.3.0",
+    ],
     extras_require={
         "dev": [
             "pytest>=7.0.0",
@@ -73,7 +74,7 @@ setup(
             "pytest==8.4.0",
             "httpx==0.27.0",
             "numpy",
-            "opentelemetry-instrumentation-fastapi>=0.41b0",
+            "opentelemetry-instrumentation-fastapi==0.55b1",
         ],
     },
     include_package_data=True,

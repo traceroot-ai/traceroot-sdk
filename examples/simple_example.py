@@ -4,16 +4,14 @@ from traceroot.config import TraceRootConfig
 from traceroot.logger import get_logger
 from traceroot.tracer import TraceOptions, initialize_tracing, trace
 
-initialize_tracing(
+initialize_tracing(config=TraceRootConfig(
     service_name="example-service",
-    config=TraceRootConfig(
-        service_name="example-service",
-        github_version="v0.1.0",
-        environment="development",
-        aws_region="us-west-2",
-        otlp_endpoint="http://localhost:4318/v1/traces",
-    ),
-)
+    aws_region="us-west-2",
+    otlp_endpoint="http://localhost:4318/v1/traces",
+    github_owner="traceroot-ai",
+    github_repo_name="traceroot-sdk",
+    github_commit_hash="main",
+), )
 
 logger = get_logger()
 
