@@ -19,9 +19,9 @@ class TraceRootConfig:
     environment: str = "development"
 
     # GitHub Identification
-    owner: str = "octocat"
-    repo_name: str = "Hello-World"
-    commit_hash: str = "main"
+    github_owner: str = "octocat"
+    github_repo_name: str = "Hello-World"
+    github_commit_hash: str = "main"
 
     # log group and stream name Configuration
     cloudwatch_log_group: Optional[str] = None

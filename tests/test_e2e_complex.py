@@ -26,9 +26,9 @@ from traceroot.tracer import (TraceOptions, initialize_tracing, trace,
 # Initialize tracing
 initialize_tracing(config=TraceRootConfig(
     service_name="complex-test-service",
-    owner="test-owner",
-    repo_name="test-repo",
-    commit_hash="v0.1.0",
+    github_owner="test-owner",
+    github_repo_name="test-repo",
+    github_commit_hash="v0.1.0",
     environment="test",
     aws_region="us-west-2",
     otlp_endpoint="http://localhost:4318/v1/traces",

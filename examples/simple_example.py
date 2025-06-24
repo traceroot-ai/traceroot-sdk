@@ -8,9 +8,9 @@ initialize_tracing(config=TraceRootConfig(
     service_name="example-service",
     aws_region="us-west-2",
     otlp_endpoint="http://localhost:4318/v1/traces",
-    owner="traceroot-ai",
-    repo_name="traceroot-sdk",
-    commit_hash="main",
+    github_owner="traceroot-ai",
+    github_repo_name="traceroot-sdk",
+    github_commit_hash="main",
 ), )
 
 logger = get_logger()

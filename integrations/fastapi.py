@@ -42,9 +42,10 @@ def connect_fastapi(app: FastAPI) -> None:
         if span and span.is_recording():
             # Add service metadata to the span
             span.set_attribute("service.name", config.service_name)
-            span.set_attribute("service.github_owner", config.owner)
-            span.set_attribute("service.github_repo_name", config.repo_name)
-            span.set_attribute("service.version", config.commit_hash)
+            span.set_attribute("service.github_owner", config.github_owner)
+            span.set_attribute("service.github_repo_name",
+                               config.github_repo_name)
+            span.set_attribute("service.version", config.github_commit_hash)
             span.set_attribute("service.environment", config.environment)
 
             # Add request path
