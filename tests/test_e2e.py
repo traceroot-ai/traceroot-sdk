@@ -10,36 +10,27 @@ This example shows how to:
 
 import asyncio
 import time
-from fastapi import FastAPI
 
-# Import TraceRoot - only public API
-from traceroot.tracer import (
-    initialize_tracing,
-    trace,
-    TraceOptions,
-    write_attributes_to_current_span,
-)
-from traceroot.logger import (
-    get_logger,
-)
-from integrations.fastapi import (
-    connect_fastapi,
-)
-from query.client import (
-    TraceRootClient,
-)
+from fastapi import FastAPI
+from query.client import TraceRootClient
+
+from integrations.fastapi import connect_fastapi
 from traceroot.config import TraceRootConfig
+from traceroot.logger import get_logger
+# Import TraceRoot - only public API
+from traceroot.tracer import (TraceOptions, initialize_tracing, trace,
+                              write_attributes_to_current_span)
 
 # Initialize tracing (call this once at startup)
-initialize_tracing(
-    config=TraceRootConfig(
-        service_name="example-service",
-        github_version="v0.1.0",
-        environment="development",
-        aws_region="us-west-2",
-        otlp_endpoint="http://localhost:4318/v1/traces",
-    )
-)
+initialize_tracing(config=TraceRootConfig(
+    service_name="example-service",
+    github_owner="octocat",
+    github_repo_name="Hello-World",
+    github_commit_hash="v0.1.0",
+    environment="development",
+    aws_region="us-west-2",
+    otlp_endpoint="http://localhost:4318/v1/traces",
+))
 
 # Get logger instance
 logger = get_logger()
@@ -74,14 +65,16 @@ async def async_function(delay: float):
     return f"Completed after {delay} seconds"
 
 
-# Example 4: Function with custom attributes using write_attributes_to_current_span
-@trace(TraceOptions(trace_params=True, span_name="custom-attributes-operation"))
+# Example 4: Function with custom attributes using
+# write_attributes_to_current_span
+@trace(TraceOptions(trace_params=True,
+                    span_name="custom-attributes-operation"))
 def function_with_custom_attributes(value: int):
     """Example showing how to add custom attributes to the current span"""
     logger.info(f"Processing value: {value}")
-    
+
     result = value * 2
-    
+
     # Add custom attributes to the current span
     write_attributes_to_current_span({
         "operation_type": "multiplication",
@@ -89,7 +82,7 @@ def function_with_custom_attributes(value: int):
         "output_value": result,
         "custom_metadata": "example_data"
     })
-    
+
     logger.info(f"Custom attributes operation result: {result}")
     return result
 
@@ -99,36 +92,45 @@ def function_with_custom_attributes(value: int):
 def complex_operation_example():
     """Example showing nested spans through function calls"""
     logger.info("Starting complex operation")
-    
+
     # Add operation metadata
     write_attributes_to_current_span({"operation_id": "complex-001"})
-    
+
     data = "start"
-    
+
     # Each step is a separate traced function
     data = step_one(data)
-    data = step_two(data)  
+    data = step_two(data)
     data = step_three(data)
-    
+
     logger.info(f"Complex operation result: {data}")
     return data
 
 
-@trace(TraceOptions(span_name="step-1", trace_params=True, trace_return_value=True))
+@trace(
+    TraceOptions(span_name="step-1",
+                 trace_params=True,
+                 trace_return_value=True))
 def step_one(data: str) -> str:
     """First step of complex operation"""
     write_attributes_to_current_span({"step_number": 1})
     return data + " -> step1"
 
 
-@trace(TraceOptions(span_name="step-2", trace_params=True, trace_return_value=True))
+@trace(
+    TraceOptions(span_name="step-2",
+                 trace_params=True,
+                 trace_return_value=True))
 def step_two(data: str) -> str:
     """Second step of complex operation"""
     write_attributes_to_current_span({"step_number": 2})
     return data + " -> step2"
 
 
-@trace(TraceOptions(span_name="step-3", trace_params=True, trace_return_value=True))
+@trace(
+    TraceOptions(span_name="step-3",
+                 trace_params=True,
+                 trace_return_value=True))
 def step_three(data: str) -> str:
     """Third step of complex operation"""
     write_attributes_to_current_span({"step_number": 3})
@@ -136,19 +138,24 @@ def step_three(data: str) -> str:
 
 
 # Example 6: Function with selective parameter tracing
-@trace(TraceOptions(trace_params=["important_param", "config"], trace_return_value=True))
-def selective_param_tracing(important_param: str, secret_param: str, config: dict, debug_info: str):
+@trace(
+    TraceOptions(trace_params=["important_param", "config"],
+                 trace_return_value=True))
+def selective_param_tracing(important_param: str, secret_param: str,
+                            config: dict, debug_info: str):
     """Example showing how to trace only specific parameters"""
     logger.info("Processing with selective parameter tracing")
-    
-    # Only important_param and config will be traced, not secret_param or debug_info
-    result = f"Processed {important_param} with config keys: {list(config.keys())}"
-    
+
+    # Only important_param and config will be traced,
+    # not secret_param or debug_info
+    result = (f"Processed {important_param} with config keys: "
+              f"{list(config.keys())}")
+
     write_attributes_to_current_span({
         "processing_mode": "selective",
         "config_size": len(config)
     })
-    
+
     return result
 
 
@@ -157,13 +164,13 @@ def selective_param_tracing(important_param: str, secret_param: str, config: dic
 def error_prone_function(should_fail: bool = False):
     """Example showing how errors are handled in traced functions"""
     logger.info(f"Running error-prone function, should_fail={should_fail}")
-    
+
     write_attributes_to_current_span({"test_mode": should_fail})
-    
+
     if should_fail:
         logger.error("Simulating an error")
         raise ValueError("Simulated error for testing")
-    
+
     logger.info("Function completed successfully")
     return "Success!"
 
@@ -179,7 +186,7 @@ connect_fastapi(app)
 async def root():
     """Root endpoint that calls traced functions"""
     logger.info("Root endpoint called")
-    
+
     # Call traced functions
     simple_result = simple_function()
     detailed_result = detailed_function(10, 20, "api-call")
@@ -189,10 +196,12 @@ async def root():
     selective_result = selective_param_tracing(
         important_param="api-data",
         secret_param="secret123",
-        config={"env": "production", "debug": False},
-        debug_info="internal-debug-data"
-    )
-    
+        config={
+            "env": "production",
+            "debug": False
+        },
+        debug_info="internal-debug-data")
+
     return {
         "message": "TraceRoot example API",
         "simple_result": simple_result,
@@ -217,10 +226,10 @@ async def error_test():
     try:
         # This will succeed
         success_result = error_prone_function(should_fail=False)
-        
+
         # This will fail and show error tracing
         error_prone_function(should_fail=True)
-        
+
         return {"result": success_result}
     except ValueError as e:
         logger.error(f"Caught expected error: {e}")
@@ -231,67 +240,68 @@ async def error_test():
 def query_example():
     """Example of how to query logs and traces"""
     client = TraceRootClient(aws_region="us-west-2")
-    
+
     # Query recent logs for the service
     recent_logs = client.query_logs_by_service(
         service_name="example-service",
         log_group_name="traceroot-example-service",
-        minutes=60
-    )
+        minutes=60)
     print(f"Found {len(recent_logs)} recent log entries")
-    
+
     # Query logs by trace ID (you would get this from a trace)
     # trace_id = "1-4bd3ef22-1264608c127ced6a0c99f898"  # Example trace ID
     # trace_logs = client.query_logs_by_trace_id(trace_id)
     # print(f"Found {len(trace_logs)} logs for trace {trace_id}")
-    
+
     # Get recent traces
-    recent_traces = client.get_recent_traces(minutes=60, service_name="example-service")
+    recent_traces = client.get_recent_traces(minutes=60,
+                                             service_name="example-service")
     print(f"Found {len(recent_traces)} recent traces")
 
 
 if __name__ == "__main__":
     # Run some example functions
     print("Running TraceRoot examples...")
-    
+
     # Test traced functions
     simple_function()
     detailed_function(5, 10, "test-run")
-    
+
     # Test async function
     asyncio.run(async_function(0.1))
-    
+
     # Test custom attributes
     function_with_custom_attributes(21)
-    
+
     # Test selective parameter tracing
-    selective_param_tracing(
-        important_param="test-data",
-        secret_param="secret456", 
-        config={"mode": "test", "verbose": True},
-        debug_info="test-debug-info"
-    )
-    
+    selective_param_tracing(important_param="test-data",
+                            secret_param="secret456",
+                            config={
+                                "mode": "test",
+                                "verbose": True
+                            },
+                            debug_info="test-debug-info")
+
     # Test complex operation
     complex_operation_example()
-    
+
     # Test error handling
     try:
         error_prone_function(should_fail=False)
         print("✅ Success case handled correctly")
     except Exception as e:
         print(f"❌ Unexpected error in success case: {e}")
-    
+
     try:
         error_prone_function(should_fail=True)
         print("❌ Error case should have failed")
     except ValueError:
         print("✅ Error case handled correctly")
-    
+
     # Example query (uncomment if you have AWS credentials configured)
     # query_example()
-    
+
     print("Examples completed!")
-    
+
     # To run the FastAPI server, use:
-    # uvicorn example_usage:app --reload 
+    # uvicorn example_usage:app --reload
