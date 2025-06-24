@@ -42,9 +42,9 @@ class TraceIdFilter(logging.Filter):
 
         # Add service metadata
         record.service_name = self.config.service_name
-        record.commit_hash = self.config.commit_hash
-        record.owner = self.config.owner
-        record.repo_name = self.config.repo_name
+        record.github_commit_hash = self.config.github_commit_hash
+        record.github_owner = self.config.github_owner
+        record.github_repo_name = self.config.github_repo_name
         record.environment = self.config.environment
 
         return True
@@ -94,7 +94,8 @@ class TraceRootLogger:
         # Create formatter with trace correlation
         self.formatter = logging.Formatter(
             '%(asctime)s;%(levelname)s;%(service_name)s;'
-            '%(commit_hash)s;%(owner)s;%(repo_name)s;%(environment)s;'
+            '%(github_commit_hash)s;%(github_owner)s;%(github_repo_name)s;'
+            '%(environment)s;'
             '%(trace_id)s;%(span_id)s;%(stack_trace)s;%(message)s')
 
         # Create trace filter

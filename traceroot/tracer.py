@@ -91,9 +91,9 @@ def initialize_tracing(
     resource = Resource(
         attributes={
             SERVICE_NAME: config.service_name,
-            "service.github_owner": config.owner,
-            "service.github_repo_name": config.repo_name,
-            "service.version": config.commit_hash,
+            "service.github_owner": config.github_owner,
+            "service.github_repo_name": config.github_repo_name,
+            "service.version": config.github_commit_hash,
             "service.environment": config.environment,
         })
 
