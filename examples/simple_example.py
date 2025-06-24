@@ -5,13 +5,14 @@ from traceroot.logger import get_logger
 from traceroot.tracer import TraceOptions, initialize_tracing, trace
 
 initialize_tracing(config=TraceRootConfig(
+    name="traceroot-ai-experiment",
     service_name="example-service",
     aws_region="us-west-2",
     otlp_endpoint="http://localhost:4318/v1/traces",
     github_owner="traceroot-ai",
     github_repo_name="traceroot-sdk",
     github_commit_hash="main",
-), )
+))
 
 logger = get_logger()
 
