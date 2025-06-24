@@ -29,10 +29,9 @@ _config: Optional[TraceRootConfig] = None
 
 @dataclass
 class TraceOptions:
-    """Options for configuring function tracing"""
-
-    span_name: str = ""
-    span_name_suffix: str = ""
+    r"""Options for configuring function tracing"""
+    span_name: str | None = None
+    span_name_suffix: str | None = None
 
     # Parameter tracking options
     trace_params: Union[bool, Sequence[str]] = False
@@ -42,21 +41,22 @@ class TraceOptions:
     flatten_attributes: bool = True
 
     def get_span_name(self, fn: Callable) -> str:
-        """Get the span name for a function"""
-        if self.span_name:
+        r"""Get the span name for a function"""
+        if self.span_name is not None:
             return self.span_name
-        return f'{fn.__module__}.{fn.__qualname__}{self.span_name_suffix}'
+        if self.span_name_suffix is not None:
+            return f'{fn.__module__}.{fn.__qualname__}{self.span_name_suffix}'
+        return f'{fn.__module__}.{fn.__qualname__}'
 
 
-def initialize_tracing(
-        config: Optional[TraceRootConfig] = None) -> TracerProvider:
+def _initialize_tracing(**kwargs: Any) -> TracerProvider:
     r"""Initialize TraceRoot tracing and logging.
 
     This is the main entry point for setting up tracing and logging.
     Call this once at the start of your application.
 
     Args:
-        config: Optional TraceRootConfig.
+        config: TraceRootConfig.
             If not provided, will be created from environment variables.
 
     Returns:
@@ -69,7 +69,7 @@ def initialize_tracing(
             environment="production",
             aws_region="us-east-1"
         )
-        initialize_tracing(config)
+        _initialize_tracing(config)
     """
     global _tracer_provider, _config
 
@@ -77,9 +77,8 @@ def initialize_tracing(
     if _tracer_provider is not None:
         return _tracer_provider
 
-    # Use provided config or create from environment
-    # if config is None:
-    #     config = get_config_from_env(service_name)
+    config = TraceRootConfig(**kwargs)
+
     _config = config
 
     # TODO(xinwei): separate logger initialization from tracer initialization.
@@ -162,6 +161,7 @@ def _trace(function: Callable, options: TraceOptions, *args: Any,
         # Get span name from options
         _span_name = options.get_span_name(function)
 
+        print(f"function: {function.__name__}, span name: {_span_name}")
         # Create and start new span
         _span = tracer.start_as_current_span(_span_name)
     except Exception:

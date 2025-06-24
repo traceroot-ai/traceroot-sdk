@@ -1,10 +1,8 @@
 import time
 
-from traceroot.config import TraceRootConfig
-from traceroot.logger import get_logger
-from traceroot.tracer import TraceOptions, initialize_tracing, trace
+import traceroot
 
-initialize_tracing(config=TraceRootConfig(
+traceroot.init(
     name="traceroot-ai-experiment",
     service_name="example-service",
     aws_region="us-west-2",
@@ -12,19 +10,19 @@ initialize_tracing(config=TraceRootConfig(
     github_owner="traceroot-ai",
     github_repo_name="traceroot-sdk",
     github_commit_hash="main",
-))
+)
 
-logger = get_logger()
+logger = traceroot.get_logger()
 
 
-@trace(TraceOptions(span_name="logging-function-2"))
+@traceroot.trace()
 def logging_function_2():
     logger.info("This is an info message 2")
     logger.warning("This is a warning message 2")
     logger.error("This is an error message 2")
 
 
-@trace(TraceOptions(span_name="logging-function"))
+@traceroot.trace()
 def logging_function():
     logger.info("This is an info message")
     logger.warning("This is a warning message")
@@ -32,7 +30,7 @@ def logging_function():
     logging_function_2()
 
 
-@trace(TraceOptions(span_name="main"))
+@traceroot.trace()
 def main():
     logger.debug("Main function started")
     time.sleep(1)
