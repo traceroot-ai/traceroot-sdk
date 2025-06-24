@@ -163,7 +163,7 @@ def get_logger(name: Optional[str] = None) -> TraceRootLogger:
     """Get the global logger instance or create a new one"""
     if _global_logger is None:
         raise RuntimeError(
-            "Logger not initialized. Call initialize_tracing() first.")
+            "Logger not initialized. Call traceroot.init() first.")
 
     if name is None:
         return _global_logger
