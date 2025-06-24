@@ -56,7 +56,10 @@ class TraceIdFilter(logging.Filter):
 
         for frame_info in stack[
                 3:]:  # Skip current frame, filter frame, and logging frame
-            filename = os.path.basename(frame_info.filename)
+            # Include parent directory in filename for better context
+            path_parts = frame_info.filename.split(os.sep)
+            filename = (os.sep.join(path_parts[-2:]) if len(path_parts) >= 2
+                        else os.path.basename(frame_info.filename))
             function_name = frame_info.function
             line_number = frame_info.lineno
 
@@ -65,9 +68,10 @@ class TraceIdFilter(logging.Filter):
             # trace
 
             # Skip logging module frames
-            # if 'logging' in filename or filename.startswith('__'):
-            if ('logger.py' in filename) or ('tracer.py' in filename) or (
-                    filename.startswith('__')):
+            # TODO: Improve this to avoid skipping user's scripts
+            if (('logger.py' in filename) or ('tracer.py' in filename)
+                    or ('logging/' in filename) or filename.startswith('__')
+                    or filename.endswith('/__init__.py')):
                 continue
 
             relevant_frames.append(f"{filename}:{function_name}:{line_number}")
