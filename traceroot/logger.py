@@ -118,8 +118,8 @@ class TraceRootLogger:
         try:
             session = boto3.Session(region_name=self.config.aws_region)
             cloudwatch_handler = watchtower.CloudWatchLogHandler(
-                log_group=self.config.cloudwatch_log_group,
-                stream_name=self.config.cloudwatch_stream_name,
+                log_group=self.config._cloudwatch_log_group,
+                stream_name=self.config._cloudwatch_stream_name,
                 boto3_client=session.client('logs'))
             cloudwatch_handler.setFormatter(self.formatter)
             cloudwatch_handler.addFilter(self.trace_filter)

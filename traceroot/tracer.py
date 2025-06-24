@@ -50,8 +50,7 @@ class TraceOptions:
 
 def initialize_tracing(
         config: Optional[TraceRootConfig] = None) -> TracerProvider:
-    """
-    Initialize TraceRoot tracing and logging.
+    r"""Initialize TraceRoot tracing and logging.
 
     This is the main entry point for setting up tracing and logging.
     Call this once at the start of your application.
