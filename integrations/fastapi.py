@@ -20,11 +20,12 @@ def connect_fastapi(app: FastAPI) -> None:
         app: FastAPI application instance
 
     Example:
+        import traceroot
         from fastapi import FastAPI
-        from traceroot import initialize_tracing, connect_fastapi
+        from traceroot import connect_fastapi
 
         app = FastAPI()
-        initialize_tracing("my-api")
+        traceroot.init()
         connect_fastapi(app)
     """
     provider = get_tracer_provider()
@@ -32,7 +33,7 @@ def connect_fastapi(app: FastAPI) -> None:
 
     if provider is None:
         raise RuntimeError(
-            "Tracing not initialized. Call initialize_tracing() first.")
+            "Tracing not initialized. Call traceroot.init() first.")
 
     if config is None:
         raise RuntimeError("Configuration not available.")
