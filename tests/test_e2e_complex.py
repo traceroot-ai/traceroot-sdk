@@ -25,6 +25,7 @@ from traceroot.tracer import (TraceOptions, initialize_tracing, trace,
 
 # Initialize tracing
 initialize_tracing(config=TraceRootConfig(
+    name="traceroot-ai-experiment",
     service_name="complex-test-service",
     github_owner="test-owner",
     github_repo_name="test-repo",
