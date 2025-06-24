@@ -23,14 +23,17 @@ export AWS_DEFAULT_REGION='your_region'
 and run `def initialize_tracing(...)` in the beginning, where we need to set up
 the following environment variable
 ```
+- name
 - aws_region
 - otlp_endpoint
 ```
+
+Notice that the `name` is the name of the user who is using the Traceroot SDK.
+
 Please reachout to founders@traceroot.ai if you do not have these credentials
 yet.
 
 ### Running examples
 ```bash
-python tests/test_e2e.py
 python tests/test_e2e_complex.py
 ```
