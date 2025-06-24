@@ -17,14 +17,14 @@ from typing import Any, Dict, List
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
+import traceroot
 from integrations.fastapi import connect_fastapi
-from traceroot.config import TraceRootConfig
 from traceroot.logger import get_logger
-from traceroot.tracer import (TraceOptions, initialize_tracing, trace,
+from traceroot.tracer import (TraceOptions, trace,
                               write_attributes_to_current_span)
 
 # Initialize tracing
-initialize_tracing(config=TraceRootConfig(
+traceroot.init(
     name="traceroot-ai-experiment",
     service_name="complex-test-service",
     github_owner="test-owner",
@@ -34,7 +34,7 @@ initialize_tracing(config=TraceRootConfig(
     aws_region="us-west-2",
     otlp_endpoint="http://localhost:4318/v1/traces",
     enable_console_export=True,
-))
+)
 
 logger = get_logger()
 
