@@ -5,10 +5,12 @@ import json
 from contextlib import contextmanager
 from dataclasses import dataclass
 from functools import wraps
+from pathlib import Path
 from typing import Any, Callable, Dict, Optional, Sequence, Union
 
 import opentelemetry
 import pandas as pd
+import yaml
 from opentelemetry import trace as otel_trace
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import \
     OTLPSpanExporter
@@ -56,20 +58,23 @@ def _initialize_tracing(**kwargs: Any) -> TracerProvider:
     Call this once at the start of your application.
 
     Args:
-        config: TraceRootConfig.
-            If not provided, will be created from environment variables.
+        **kwargs: Configuration parameters for TraceRootConfig.
+            If a .traceroot-config.yaml file exists, it will be loaded first,
+            and any kwargs provided will override the file configuration.
 
     Returns:
         TracerProvider instance
 
     Example:
         # With custom config
-        config = TraceRootConfig(
+        _initialize_tracing(
             service_name="my-service",
             environment="production",
             aws_region="us-east-1"
         )
-        _initialize_tracing(config)
+
+        # Or using .traceroot-config.yaml file with optional overrides
+        _initialize_tracing(environment="staging")  # Override only environment
     """
     global _tracer_provider, _config
 
@@ -77,7 +82,16 @@ def _initialize_tracing(**kwargs: Any) -> TracerProvider:
     if _tracer_provider is not None:
         return _tracer_provider
 
-    config = TraceRootConfig(**kwargs)
+    # Load configuration from YAML file first
+    yaml_config = _find_traceroot_config()
+
+    # Merge YAML config with kwargs (kwargs take precedence)
+    if yaml_config:
+        config_params = {**yaml_config, **kwargs}
+    else:
+        config_params = kwargs
+
+    config = TraceRootConfig(**config_params)
 
     _config = config
 
@@ -161,8 +175,8 @@ def _trace(function: Callable, options: TraceOptions, *args: Any,
         # Get span name from options
         _span_name = options.get_span_name(function)
 
-        print(f"function: {function.__name__}, span name: {_span_name}")
         # Create and start new span
+
         _span = tracer.start_as_current_span(_span_name)
     except Exception:
         # If span creation fails, yield None and continue without tracing
@@ -276,26 +290,6 @@ def _params_to_dict(
 
 
 def _store_dict_in_span(data: Dict[str, Any], span: Any, flatten: bool = True):
-    # """Store dictionary data as span attributes"""
-    # if not span or not span.is_recording():
-    #     return
-
-    # try:
-    #     if flatten:
-    #         data = _flatten_dict(data)
-
-    #     # Convert None values to string and serialize
-    #     serialized_data = {
-    #         k: v if v is not None else 'None'
-    #         for k, v in data.items()
-    #     }
-    #     serialized_data = json.loads(
-    #       json.dumps(serialized_data, default=str))
-
-    #     span.set_attributes(serialized_data)
-    # except Exception:
-    #     # Don't break execution if attribute setting fails
-    #     pass
     """
     Stores a dictionary in a span (as attributes), optionally flattening it.
     """
@@ -306,18 +300,32 @@ def _store_dict_in_span(data: Dict[str, Any], span: Any, flatten: bool = True):
 
 
 def _flatten_dict(data: Dict[str, Any], sep: str = "_") -> Dict[str, Any]:
-    # """Flatten nested dictionary with separator"""
-    # def _flatten_recursive(obj, parent_key=''):
-    #     items = []
-    #     if isinstance(obj, dict):
-    #         for k, v in obj.items():
-    #             new_key = f"{parent_key}{sep}{k}" if parent_key else k
-    #             items.extend(_flatten_recursive(v, new_key).items())
-    #     else:
-    #         return {parent_key: obj}
-    #     return dict(items)
-
-    # return _flatten_recursive(data)
     """Flattens a dictionary, joining parent/child keys with `sep`."""
     flattened = pd.json_normalize(data, sep=sep).to_dict(orient="records")
     return flattened[0] if len(flattened) > 0 else {}
+
+
+def _find_traceroot_config() -> Optional[Dict[str, Any]]:
+    """Find and load the .traceroot-config.yaml file.
+
+    Searches the current directory for the configuration file.
+
+    Returns:
+        Dictionary containing the configuration, or None if no file found.
+    """
+    config_filename = ".traceroot-config.yaml"
+
+    # Check current working directory
+    current_path = Path.cwd()
+    config_path = current_path / config_filename
+
+    if config_path.exists():
+        try:
+            with open(config_path) as file:
+                config_data = yaml.safe_load(file)
+                return config_data if config_data else {}
+        except (yaml.YAMLError, OSError) as e:
+            print(f"Warning: Could not read config file "
+                  f"{config_path}: {e}")
+
+    return None
