@@ -58,6 +58,7 @@ setup(
         "opentelemetry-util-http==0.55b1",
         "watchtower==3.4.0",
         "pandas==2.3.0",
+        "PyYAML==6.0.2",
     ],
     extras_require={
         "dev": [
