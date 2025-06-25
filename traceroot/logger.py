@@ -56,10 +56,9 @@ class TraceIdFilter(logging.Filter):
 
         for frame_info in stack[
                 3:]:  # Skip current frame, filter frame, and logging frame
-            # Include parent directory in filename for better context
+            # Extract path relative to repository root
             path_parts = frame_info.filename.split(os.sep)
-            filename = (os.sep.join(path_parts[-2:]) if len(path_parts) >= 2
-                        else os.path.basename(frame_info.filename))
+            filename = self._get_relative_path(path_parts)
             function_name = frame_info.function
             line_number = frame_info.lineno
 
@@ -78,6 +77,35 @@ class TraceIdFilter(logging.Filter):
 
         return " -> ".join(
             reversed(relevant_frames)) if relevant_frames else "unknown"
+
+    def _get_relative_path(self, path_parts: list) -> str:
+        """Extract path relative to repository root"""
+        # First try to find the repo name in the path
+        if self.config.github_repo_name:
+            try:
+                repo_index = path_parts.index(self.config.github_repo_name)
+                # Take everything after the repo name
+                relative_parts = path_parts[repo_index + 1:]
+                if relative_parts:
+                    return os.sep.join(relative_parts)
+            except ValueError:
+                pass  # Repo name not found in path
+
+        # Fallback: look for common project structure indicators
+        for i, part in enumerate(path_parts):
+            if part in ['src', 'lib', 'app', 'examples', 'tests']:
+                relative_parts = path_parts[i:]
+                if relative_parts:
+                    return os.sep.join(relative_parts)
+
+        # Final fallback: use last 2-3 parts for context
+        if len(path_parts) >= 3:
+            return os.sep.join(path_parts[-3:])
+        elif len(path_parts) >= 2:
+            return os.sep.join(path_parts[-2:])
+        else:
+            return os.path.basename(
+                path_parts[-1]) if path_parts else "unknown"
 
 
 class TraceRootLogger:
