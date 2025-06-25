@@ -18,7 +18,7 @@ following environment variable
 ```
 export AWS_ACCESS_KEY_ID='your_access_key'
 export AWS_SECRET_ACCESS_KEY='your_secret_key'
-export AWS_DEFAULT_REGION='your_region'
+export AWS_REGION='your_region'
 ```
 and run `traceroot.init(...)` in the beginning, where we need to set up
 the following environment variable
