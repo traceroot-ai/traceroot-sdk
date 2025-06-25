@@ -44,7 +44,7 @@
     "primary": {
       "type": "button",
       "label": "GitHub",
-      "href": "https://github.com/traceroot-ai/traceroot-sdk"
+      "href": "https://github.com/traceroot-ai/traceroot-examples"
     }
   },
   "footer": {
