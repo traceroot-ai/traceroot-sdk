@@ -91,6 +91,9 @@ def _initialize_tracing(**kwargs: Any) -> TracerProvider:
     else:
         config_params = kwargs
 
+    if len(config_params) == 0:
+        return
+
     config = TraceRootConfig(**config_params)
 
     _config = config
