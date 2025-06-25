@@ -9,10 +9,6 @@ class TraceRootConfig:
     # Identification
     name: str
     service_name: str
-    aws_region: str
-
-    # OpenTelemetry Configuration
-    otlp_endpoint: str
 
     # GitHub Identification
     github_owner: str
@@ -20,7 +16,8 @@ class TraceRootConfig:
     github_commit_hash: str
 
     # OpenTelemetry Configuration
-    otlp_endpoint: str
+    aws_region: str = "us-west-2"
+    otlp_endpoint: str = "http://localhost:4318/v1/traces"
 
     # Environment
     environment: str = "development"
