@@ -31,8 +31,8 @@
     ]
   },
   "logo": {
-    "light": "/logo/light.png",
-    "dark": "/logo/dark.png"
+    "light": "/logo/light-logo.svg",
+    "dark": "/logo/dark-logo.svg"
   },
   "navbar": {
     "links": [
