@@ -24,7 +24,7 @@ setup(
         "and AWS X-Ray for enhanced debugging experience"),
     long_description=read_readme(),
     long_description_content_type="text/markdown",
-    url="https://github.com/traceroot-ai/traceroot-sdk",
+    url="https://traceroot.ai/",
     packages=find_packages(),
     classifiers=[
         "Development Status :: 3 - Alpha",
@@ -80,7 +80,7 @@ setup(
     },
     include_package_data=True,
     zip_safe=False,
-    keywords="opentelemetry aws cloudwatch xray tracing logging debugging",
+    keywords="artificial-intelligence agent-systems opentelemetry tracing logging debugging",
     project_urls={
         "Bug Reports": "https://github.com/traceroot-ai/traceroot-sdk/issues",
         "Source": "https://github.com/traceroot-ai/traceroot-sdk",
