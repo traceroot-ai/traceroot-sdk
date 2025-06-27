@@ -16,7 +16,7 @@ def read_readme():
 
 setup(
     name="traceroot",
-    version="0.1.0",
+    version="0.0.1",
     author="TraceRoot Team",
     author_email="",
     description=(
@@ -24,7 +24,7 @@ setup(
         "and AWS X-Ray for enhanced debugging experience"),
     long_description=read_readme(),
     long_description_content_type="text/markdown",
-    url="https://github.com/your-org/traceroot",  # Update with actual repo URL
+    url="https://github.com/traceroot-ai/traceroot-sdk",
     packages=find_packages(),
     classifiers=[
         "Development Status :: 3 - Alpha",
@@ -82,8 +82,8 @@ setup(
     zip_safe=False,
     keywords="opentelemetry aws cloudwatch xray tracing logging debugging",
     project_urls={
-        "Bug Reports": "https://github.com/your-org/traceroot/issues",
-        "Source": "https://github.com/your-org/traceroot",
-        "Documentation": "https://github.com/your-org/traceroot#readme",
+        "Bug Reports": "https://github.com/traceroot-ai/traceroot-sdk/issues",
+        "Source": "https://github.com/traceroot-ai/traceroot-sdk",
+        "Documentation": "https://docs.traceroot.ai",
     },
 )
