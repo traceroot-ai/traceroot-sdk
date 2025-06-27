@@ -16,7 +16,7 @@ def read_readme():
 
 setup(
     name="traceroot",
-    version="0.0.1",
+    version="0.0.2",
     author="TraceRoot Team",
     author_email="",
     description=(
