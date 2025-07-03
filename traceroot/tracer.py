@@ -201,7 +201,7 @@ def _trace(function: Callable, options: TraceOptions, *args: Any,
         yield span
 
 
-def trace(options: TraceOptions = TraceOptions()) -> Callable:
+def trace(options: TraceOptions = TraceOptions()) -> Callable[..., Any]:
     """
     Decorator for tracing function execution.
 
