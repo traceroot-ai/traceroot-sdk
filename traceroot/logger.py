@@ -21,7 +21,7 @@ class TraceIdFilter(logging.Filter):
         super().__init__()
         self.config = config
 
-    def filter(self, record):
+    def filter(self, record: logging.LogRecord) -> bool:
         """Add trace correlation data to log record"""
         span = get_current_span()
         ctx = span.get_span_context()
@@ -76,11 +76,12 @@ class TraceIdFilter(logging.Filter):
 
             # Skip logging module frames
             # TODO: Improve this to avoid skipping user's scripts
-            if (('logger.py' in filename) or ('tracer.py' in filename)
-                    or ('logging/' in filename) or filename.startswith('__')
+            if (('traceroot' in filename and 'logger.py' in filename)
+                    or ('traceroot' in filename and 'tracer.py' in filename)
+                    or ('traceroot' in filename and 'logging/' in filename)
+                    or filename.startswith('__')
                     or filename.endswith('/__init__.py')):
                 continue
-
             relevant_frames.append(f"{filename}:{function_name}:{line_number}")
 
         return " -> ".join(
@@ -161,7 +162,7 @@ class TraceRootLogger:
             cloudwatch_handler.addFilter(self.trace_filter)
             self.logger.addHandler(cloudwatch_handler)
         except Exception as e:
-            self.logger.warning(f"Failed to setup CloudWatch logging: {e}")
+            self.logger.error(f"Failed to setup CloudWatch logging: {e}")
 
     def debug(self, message: str, *args, **kwargs):
         """Log debug message"""

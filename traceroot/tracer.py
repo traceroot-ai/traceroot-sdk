@@ -331,8 +331,8 @@ def _find_traceroot_config() -> dict[str, Any] | None:
         except (yaml.YAMLError, OSError) as e:
             raise ValueError(f"Error reading config file {config_path}: {e}")
 
-    # Check subfolders for config file up to 3 levels
-    sub_folders = list_sub_folders(3, config_filename, current_path)
+    # Check subfolders for config file up to 4 levels
+    sub_folders = list_sub_folders(4, config_filename, current_path)
     for config_path in sub_folders:
         try:
             with open(config_path) as file:
@@ -342,8 +342,8 @@ def _find_traceroot_config() -> dict[str, Any] | None:
             raise ValueError(f"Error reading config file "
                              f"{config_path}: {e}")
 
-    # Check parent folders for config file up to 3 levels
-    parent_folders = list_parent_folders(3, config_filename, current_path)
+    # Check parent folders for config file up to 4 levels
+    parent_folders = list_parent_folders(4, config_filename, current_path)
     for config_path in parent_folders:
         try:
             with open(config_path) as file:
