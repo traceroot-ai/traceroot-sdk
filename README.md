@@ -3,6 +3,7 @@
 [![Documentation][docs-image]][docs-url]
 [![PyPI Version][pypi-image]][pypi-url]
 [![TraceRoot.AI Website][company-website-image]][company-website-url]
+[![X][company-x-image]][company-x-url]
 
 
 </div>
@@ -64,6 +65,8 @@ Please reach out to founders@traceroot.ai or visit [TraceRoot.AI](https://tracer
 [pypi-url]: https://pypi.python.org/pypi/traceroot
 [company-website-image]: https://img.shields.io/badge/TraceRoot.AI-0dbf43
 [company-website-url]: https://traceroot.ai
+[company-x-url]: https://x.com/TracerootAI
+[company-x-image]: https://img.shields.io/twitter/follow/TracerootAI?style=social
 
 ## Examples
 
