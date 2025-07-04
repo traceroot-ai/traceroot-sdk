@@ -6,7 +6,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from functools import wraps
 from pathlib import Path
-from typing import Any, Callable, Dict, Optional, Sequence, Union
+from typing import Any, Callable, Sequence
 
 import opentelemetry
 import pandas as pd
@@ -23,10 +23,11 @@ from opentelemetry.trace import get_current_span
 
 from traceroot.config import TraceRootConfig
 from traceroot.logger import initialize_logger
+from traceroot.utils.io import list_parent_folders, list_sub_folders
 
 # Global state
-_tracer_provider: Optional[TracerProvider] = None
-_config: Optional[TraceRootConfig] = None
+_tracer_provider: TracerProvider | None = None
+_config: TraceRootConfig | None = None
 
 
 @dataclass
@@ -36,7 +37,7 @@ class TraceOptions:
     span_name_suffix: str | None = None
 
     # Parameter tracking options
-    trace_params: Union[bool, Sequence[str]] = False
+    trace_params: bool | Sequence[str] = False
     trace_return_value: bool = False
 
     # Attribute handling
@@ -70,7 +71,7 @@ def _initialize_tracing(**kwargs: Any) -> TracerProvider:
         _initialize_tracing(
             service_name="my-service",
             environment="production",
-            aws_region="us-east-1"
+            aws_region="us-west-2"
         )
 
         # Or using .traceroot-config.yaml file with optional overrides
@@ -152,19 +153,19 @@ def is_initialized() -> bool:
     return _tracer_provider is not None
 
 
-def get_tracer_provider() -> Optional[TracerProvider]:
+def get_tracer_provider() -> TracerProvider | None:
     """Get the current tracer provider"""
     return _tracer_provider
 
 
-def get_config() -> Optional[TraceRootConfig]:
+def get_config() -> TraceRootConfig | None:
     """Get the current configuration"""
     return _config
 
 
 @contextmanager
 def _trace(function: Callable, options: TraceOptions, *args: Any,
-           **kwargs: Dict[str, Any]):
+           **kwargs: dict[str, Any]):
     """Internal context manager for tracing function execution"""
     # no-op if tracing is not initialized
     if not is_initialized():
@@ -250,7 +251,7 @@ def trace(options: TraceOptions = TraceOptions()) -> Callable[..., Any]:
     return _inner_trace
 
 
-def write_attributes_to_current_span(attributes: Dict[str, Any]) -> None:
+def write_attributes_to_current_span(attributes: dict[str, Any]) -> None:
     """Write custom attributes to the current active span"""
     span = get_current_span()
     if span and span.is_recording():
@@ -260,17 +261,17 @@ def write_attributes_to_current_span(attributes: Dict[str, Any]) -> None:
 # Utility functions for span management
 
 
-def _serialize_dict(d: Dict[Any, Any]) -> Dict[Any, Any]:
+def _serialize_dict(d: dict[Any, Any]) -> dict[Any, Any]:
     """Serializes a dictionary."""
     return json.loads(json.dumps(d, default=str))
 
 
 def _params_to_dict(
     func: Callable,
-    params_to_track: Union[bool, Sequence[str]],
+    params_to_track: bool | Sequence[str],
     *args: Any,
     **kwargs: Any,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Convert function parameters to dictionary for tracing"""
     try:
         bound_arguments = inspect.signature(func).bind(*args, **kwargs)
@@ -292,7 +293,7 @@ def _params_to_dict(
         return {}
 
 
-def _store_dict_in_span(data: Dict[str, Any], span: Any, flatten: bool = True):
+def _store_dict_in_span(data: dict[str, Any], span: Any, flatten: bool = True):
     """
     Stores a dictionary in a span (as attributes), optionally flattening it.
     """
@@ -302,13 +303,13 @@ def _store_dict_in_span(data: Dict[str, Any], span: Any, flatten: bool = True):
     span.set_attributes(_serialize_dict(data))
 
 
-def _flatten_dict(data: Dict[str, Any], sep: str = "_") -> Dict[str, Any]:
+def _flatten_dict(data: dict[str, Any], sep: str = "_") -> dict[str, Any]:
     """Flattens a dictionary, joining parent/child keys with `sep`."""
     flattened = pd.json_normalize(data, sep=sep).to_dict(orient="records")
     return flattened[0] if len(flattened) > 0 else {}
 
 
-def _find_traceroot_config() -> Optional[Dict[str, Any]]:
+def _find_traceroot_config() -> dict[str, Any] | None:
     """Find and load the .traceroot-config.yaml file.
 
     Searches the current directory for the configuration file.
@@ -328,7 +329,27 @@ def _find_traceroot_config() -> Optional[Dict[str, Any]]:
                 config_data = yaml.safe_load(file)
                 return config_data if config_data else {}
         except (yaml.YAMLError, OSError) as e:
-            print(f"Warning: Could not read config file "
-                  f"{config_path}: {e}")
+            raise ValueError(f"Error reading config file {config_path}: {e}")
 
+    # Check subfolders for config file up to 3 levels
+    sub_folders = list_sub_folders(3, config_filename, current_path)
+    for config_path in sub_folders:
+        try:
+            with open(config_path) as file:
+                config_data = yaml.safe_load(file)
+                return config_data if config_data else {}
+        except (yaml.YAMLError, OSError) as e:
+            raise ValueError(f"Error reading config file "
+                             f"{config_path}: {e}")
+
+    # Check parent folders for config file up to 3 levels
+    parent_folders = list_parent_folders(3, config_filename, current_path)
+    for config_path in parent_folders:
+        try:
+            with open(config_path) as file:
+                config_data = yaml.safe_load(file)
+                return config_data if config_data else {}
+        except (yaml.YAMLError, OSError) as e:
+            raise ValueError(f"Error reading config file "
+                             f"{config_path}: {e}")
     return None
