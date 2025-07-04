@@ -57,7 +57,15 @@ class TraceIdFilter(logging.Filter):
         for frame_info in stack[
                 3:]:  # Skip current frame, filter frame, and logging frame
             # Extract path relative to repository root
-            path_parts = frame_info.filename.split(os.sep)
+            filename = frame_info.filename
+
+            # Handle the case where the filename is in the site-packages folder
+            # which is installed by the user.
+            if "site-packages/" in filename:
+                filename = filename.split("site-packages/", 1)[1]
+                filename = self.config.github_repo_name + "/" + filename
+
+            path_parts = filename.split(os.sep)
             filename = self._get_relative_path(path_parts)
             function_name = frame_info.function
             line_number = frame_info.lineno
@@ -119,6 +127,8 @@ class TraceRootLogger:
         # Configure logging to use UTC time
         logging.Formatter.converter = time.gmtime
 
+        # Formatter and trace filter are only used for cloudwatch logging
+
         # Create formatter with trace correlation
         self.formatter = logging.Formatter(
             '%(asctime)s;%(levelname)s;%(service_name)s;'
@@ -135,14 +145,12 @@ class TraceRootLogger:
         self._setup_cloudwatch_handler()
 
     def _setup_console_handler(self):
-        """Setup console logging handler"""
+        r"""Setup console logging handler"""
         console_handler = logging.StreamHandler(sys.stdout)
-        console_handler.setFormatter(self.formatter)
-        console_handler.addFilter(self.trace_filter)
         self.logger.addHandler(console_handler)
 
     def _setup_cloudwatch_handler(self):
-        """Setup CloudWatch logging handler"""
+        r"""Setup CloudWatch logging handler"""
         try:
             session = boto3.Session(region_name=self.config.aws_region)
             cloudwatch_handler = watchtower.CloudWatchLogHandler(
