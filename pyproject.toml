@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "traceroot"
-version = "0.0.2"
+version = "0.0.3a1"
 description = "A clean, principled wrapper around OpenTelemetry, AWS CloudWatch, and AWS X-Ray for enhanced debugging experience"
 readme = "README.md"
 requires-python = ">=3.8"
