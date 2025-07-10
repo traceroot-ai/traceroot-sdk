@@ -189,6 +189,7 @@ def _trace(function: Callable, options: TraceOptions, *args: Any,
 
     with _span as span:
         # Set AWS X-Ray annotations as individual attributes
+        span.set_attribute("hash", _config._cloudwatch_log_group)
         span.set_attribute("service_name", _config.service_name)
         span.set_attribute("service_environment", _config.environment)
         # Add parameter attributes if requested
