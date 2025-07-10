@@ -9,13 +9,13 @@ class TraceRootConfig:
     # Identification
     service_name: str
 
-    # Token for TraceRoot API
-    token: str
-
     # GitHub Identification
     github_owner: str
     github_repo_name: str
     github_commit_hash: str
+
+    # Token for TraceRoot API
+    token: str | None = None
 
     # User identification
     name: str | None = None
