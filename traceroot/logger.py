@@ -8,6 +8,7 @@ import time
 from typing import Optional
 
 import boto3
+import requests
 import watchtower
 from opentelemetry.trace import get_current_span
 
@@ -150,10 +151,45 @@ class TraceRootLogger:
         console_handler = logging.StreamHandler(sys.stdout)
         self.logger.addHandler(console_handler)
 
+    def _fetch_aws_credentials(self) -> dict:
+        """Fetch AWS credentials from the traceroot endpoint"""
+        try:
+            url = "http://localhost:8000/verify/credentials"
+            params = {"token": self.config.token}
+            headers = {"Content-Type": "application/json"}
+
+            response = requests.get(url, params=params, headers=headers)
+            response.raise_for_status()
+
+            credentials = response.json()
+            return {
+                'aws_access_key_id': credentials['aws_access_key_id'],
+                'aws_secret_access_key': credentials['aws_secret_access_key'],
+                'aws_session_token': credentials['aws_session_token'],
+                'region': credentials['region'],
+                'hash': credentials['hash']
+            }
+        except Exception as e:
+            self.logger.error(f"Failed to fetch AWS credentials: {e}")
+            return None
+
     def _setup_cloudwatch_handler(self):
         r"""Setup CloudWatch logging handler"""
         try:
-            session = boto3.Session(region_name=self.config.aws_region)
+            # Fetch AWS credentials from the endpoint
+            credentials = self._fetch_aws_credentials()
+            self.config._cloudwatch_log_group = credentials['hash']
+            if not credentials:
+                self.logger.error("Failed to fetch AWS credentials, "
+                                  "falling back to default session")
+                session = boto3.Session(region_name=self.config.aws_region)
+            else:
+                session = boto3.Session(
+                    aws_access_key_id=credentials['aws_access_key_id'],
+                    aws_secret_access_key=credentials['aws_secret_access_key'],
+                    aws_session_token=credentials['aws_session_token'],
+                    region_name=credentials['region'])
+
             cloudwatch_handler = watchtower.CloudWatchLogHandler(
                 log_group=self.config._cloudwatch_log_group,
                 stream_name=self.config._cloudwatch_stream_name,

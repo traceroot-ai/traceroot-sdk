@@ -7,13 +7,18 @@ from dataclasses import dataclass
 class TraceRootConfig:
     r"""Configuration for TraceRoot tracing and logging"""
     # Identification
-    name: str
     service_name: str
+
+    # Token for TraceRoot API
+    token: str
 
     # GitHub Identification
     github_owner: str
     github_repo_name: str
     github_commit_hash: str
+
+    # User identification
+    name: str | None = None
 
     # OpenTelemetry Configuration
     aws_region: str = "us-west-2"
