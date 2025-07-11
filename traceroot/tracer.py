@@ -121,7 +121,6 @@ def _initialize_tracing(**kwargs: Any) -> TracerProvider:
         console_processor = SimpleSpanProcessor(ConsoleSpanExporter())
         provider.add_span_processor(console_processor)
 
-    # if config.enable_xray_traces:
     # OTLP exporter for X-Ray (via OpenTelemetry Collector)
     otlp_exporter = OTLPSpanExporter(endpoint=config.otlp_endpoint)
     batch_processor = BatchSpanProcessor(otlp_exporter)

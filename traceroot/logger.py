@@ -167,7 +167,8 @@ class TraceRootLogger:
                 'aws_secret_access_key': credentials['aws_secret_access_key'],
                 'aws_session_token': credentials['aws_session_token'],
                 'region': credentials['region'],
-                'hash': credentials['hash']
+                'hash': credentials['hash'],
+                'otlp_endpoint': credentials['otlp_endpoint'],
             }
         except Exception as e:
             self.logger.error(f"Failed to fetch AWS credentials: {e}")
@@ -179,6 +180,7 @@ class TraceRootLogger:
             # Fetch AWS credentials from the endpoint
             credentials = self._fetch_aws_credentials()
             self.config._cloudwatch_log_group = credentials['hash']
+            self.config.otlp_endpoint = credentials['otlp_endpoint']
             if not credentials:
                 self.logger.error("Failed to fetch AWS credentials, "
                                   "falling back to default session")
