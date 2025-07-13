@@ -202,25 +202,43 @@ class TraceRootLogger:
         except Exception as e:
             self.logger.error(f"Failed to setup CloudWatch logging: {e}")
 
+    def _increment_span_log_count(self, attribute_name: str):
+        """Increment the log count attribute for the current span"""
+        try:
+            span = get_current_span()
+            if span and span.is_recording():
+                # Get current count (default to 0 if not set)
+                current_count = span.attributes.get(attribute_name, 0)
+                # Increment and set the new value
+                span.set_attribute(attribute_name, current_count + 1)
+        except Exception:
+            # Don't let span attribute errors interfere with logging
+            pass
+
     def debug(self, message: str, *args, **kwargs):
         """Log debug message"""
         self.logger.debug(message, *args, **kwargs)
+        self._increment_span_log_count("num_debug_logs")
 
     def info(self, message: str, *args, **kwargs):
         """Log info message"""
         self.logger.info(message, *args, **kwargs)
+        self._increment_span_log_count("num_info_logs")
 
     def warning(self, message: str, *args, **kwargs):
         """Log warning message"""
         self.logger.warning(message, *args, **kwargs)
+        self._increment_span_log_count("num_warning_logs")
 
     def error(self, message: str, *args, **kwargs):
         """Log error message"""
         self.logger.error(message, *args, **kwargs)
+        self._increment_span_log_count("num_error_logs")
 
     def critical(self, message: str, *args, **kwargs):
         """Log critical message"""
         self.logger.critical(message, *args, **kwargs)
+        self._increment_span_log_count("num_critical_logs")
 
 
 # Global logger instance

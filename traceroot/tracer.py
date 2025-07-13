@@ -28,6 +28,8 @@ from traceroot.utils.io import list_parent_folders, list_sub_folders
 # Global state
 _tracer_provider: TracerProvider | None = None
 _config: TraceRootConfig | None = None
+_span_stack: list = [
+]  # Stack to track active spans for parent-child relationships
 
 
 @dataclass
@@ -122,6 +124,7 @@ def _initialize_tracing(**kwargs: Any) -> TracerProvider:
         provider.add_span_processor(console_processor)
 
     # OTLP exporter for X-Ray (via OpenTelemetry Collector)
+    config.otlp_endpoint = "http://localhost:4318/v1/traces"
     otlp_exporter = OTLPSpanExporter(endpoint=config.otlp_endpoint)
     batch_processor = BatchSpanProcessor(otlp_exporter)
     provider.add_span_processor(batch_processor)
@@ -187,22 +190,43 @@ def _trace(function: Callable, options: TraceOptions, *args: Any,
         return
 
     with _span as span:
-        # Set AWS X-Ray annotations as individual attributes
-        span.set_attribute("hash", _config._cloudwatch_log_group)
-        span.set_attribute("service_name", _config.service_name)
-        span.set_attribute("service_environment", _config.environment)
-        # Add parameter attributes if requested
-        if options.trace_params:
-            parameter_values = _params_to_dict(
-                function,
-                options.trace_params,
-                *args,
-                **kwargs,
-            )
-            _store_dict_in_span(parameter_values, span,
-                                options.flatten_attributes)
+        global _span_stack  # noqa: F824
 
-        yield span
+        # Add this span to the stack
+        _span_stack.append(span)
+
+        try:
+            # Set AWS X-Ray annotations as individual attributes
+            span.set_attribute("hash", _config._cloudwatch_log_group)
+            span.set_attribute("service_name", _config.service_name)
+            span.set_attribute("service_environment", _config.environment)
+
+            # Add number logs
+            span.set_attribute("num_debug_logs", 0)
+            span.set_attribute("num_info_logs", 0)
+            span.set_attribute("num_warning_logs", 0)
+            span.set_attribute("num_error_logs", 0)
+            span.set_attribute("num_critical_logs", 0)
+
+            # Add parameter attributes if requested
+            if options.trace_params:
+                parameter_values = _params_to_dict(
+                    function,
+                    options.trace_params,
+                    *args,
+                    **kwargs,
+                )
+                _store_dict_in_span(parameter_values, span,
+                                    options.flatten_attributes)
+
+            yield span
+        finally:
+            # Aggregate log counts to parent span before this span ends
+            _aggregate_log_counts_to_parent(span)
+
+            # Remove this span from the stack
+            if _span_stack and _span_stack[-1] == span:
+                _span_stack.pop()
 
 
 def trace(options: TraceOptions = TraceOptions()) -> Callable[..., Any]:
@@ -259,6 +283,49 @@ def write_attributes_to_current_span(attributes: dict[str, Any]) -> None:
     span = get_current_span()
     if span and span.is_recording():
         _store_dict_in_span(attributes, span, flatten=False)
+
+
+def _aggregate_log_counts_to_parent(span):
+    """Aggregate log counts from current span to its parent span"""
+    global _span_stack  # noqa: F824
+
+    if not span or not span.is_recording():
+        return
+
+    # Find the parent span from our stack
+    # The parent should be the span that was active before this one
+    parent_span = None
+    if len(_span_stack) > 1:
+        # Current span should be the last in the stack, parent
+        # should be second-to-last
+        if _span_stack[-1] == span and len(_span_stack) > 1:
+            parent_span = _span_stack[-2]
+
+    if not parent_span or not parent_span.is_recording():
+        return
+
+    # List of log count attributes to aggregate
+    log_count_attributes = [
+        "num_debug_logs", "num_info_logs", "num_warning_logs",
+        "num_error_logs", "num_critical_logs"
+    ]
+
+    # Aggregate each log count attribute
+    for attribute_name in log_count_attributes:
+        try:
+            # Get the count from the current span
+            child_count = span.attributes.get(attribute_name, 0)
+
+            if child_count > 0:
+                # Get the current count from parent (default to 0 if not set)
+                parent_count = parent_span.attributes.get(attribute_name, 0)
+
+                # Add child count to parent count
+                parent_span.set_attribute(attribute_name,
+                                          parent_count + child_count)
+        except Exception:
+            # Don't let aggregation errors interfere with tracing
+            pass
 
 
 # Utility functions for span management
