@@ -1,12 +1,12 @@
 ---
-title: "Journey with TraceRoot.AI"
+title: "Monitoring Multi-Agent Code Generation with TraceRoot.AI"
 description: "An end-to-end experience with TraceRoot.AI for monitoring your tracing, logging, and metrics data — enhanced by advanced AI agents that help you summarize, analyze, and debug all your logs and traces effortlessly."
 icon: "lightbulb"
 ---
 
-# A Complete Journey with TraceRoot.AI
+# Monitoring a Multi-Agent Code Generation System with TraceRoot.AI
 
-In this guide, we'll walk through an end-to-end journey of using TraceRoot.AI to monitor tracing, logging, and metrics in a complex multi-agent system built with LangChain and LangGraph.
+In this guide, we'll walk through an end-to-end journey of using TraceRoot.AI to monitor tracing, logging, and metrics in an automated code generation system powered by multiple AI agents built with LangChain and LangGraph.
 
 The TraceRoot.AI platform not only offers a user-friendly interface for visualizing tracing, logging, and metrics data but also features a customizable AI agent that can resolve related issues or answer questions by linking directly to the source code.
 
@@ -36,7 +36,6 @@ Put the credentials and information in a yaml file called `.traceroot-config.yam
 ```yaml
 name: "[YOUR-USER-NAME]"
 service_name: "[YOUR-SERVICE-NAME]"
-otlp_endpoint: "[ENDPOINT-GIVEN-TO-YOU]"
 github_owner: "[YOUR-GITHUB-OWNER-NAME]"
 github_repo_name: "[YOUR-GITHUB-REPO-NAME]"
 github_commit_hash: "[YOUR-GITHUB-COMMIT-HASH]"
@@ -46,9 +45,9 @@ Here is an example of a `.traceroot-config.yaml` file:
 
 [`.traceroot-config.yaml`](https://github.com/traceroot-ai/traceroot-examples/blob/main/.traceroot-config.yaml)
 
-## 3. Multi-Agent System Introduction
+## 3. Multi-Agent Code Generation System Architecture
 
-In this project, we have a multi-agent system that is built with LangChain and LangGraph for a coding agent.
+In this project, we have an automated code generation system that uses multiple specialized AI agents, built with LangChain and LangGraph, to collaboratively write, test, and debug code.
 
 <img
   src="https://raw.githubusercontent.com/traceroot-ai/traceroot-examples/refs/heads/main/examples/multi_agent/multi_agent_graph.png"
@@ -73,15 +72,15 @@ You can run the project by:
 python3 examples/multi-agent/main.py
 ```
 
-## 4. Multi-Agent System Pain Points
+## 4. Code Generation System Challenges
 
-1. The multi-agent system is complex and hard to debug. Every agent's input and output are very messy and hard to read.
+1. The code generation pipeline involving multiple agents is complex and hard to debug. The interactions between planning, coding, and review agents produce complex input/output chains that are difficult to track.
 
-2. It's hard to understand the multi-agent system tool usage such as the code execution in this multi-agent system.
+2. Understanding how the system uses various code generation and execution tools across different agents is challenging to monitor.
 
-3. It's unknown which part of the system has the highest latency.
+3. It's difficult to identify performance bottlenecks in the code generation pipeline, particularly which agent (planning, coding, or review) is causing delays.
 
-4. It's inconvenient to correlate the logs and traces with the code source.
+4. Correlating generated code, execution logs, and debugging traces with the original source code is a manual and time-consuming process.
 
 ## 5. TraceRoot.AI Solution
 
