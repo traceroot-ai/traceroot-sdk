@@ -21,9 +21,10 @@
             ]
           },
           {
-            "group": "Essentials",
+            "group": "Examples",
             "pages": [
-              "essentials/journey"
+              "examples/multi_code_agent",
+              "examples/healthcare_voice_agent"
             ]
           }
         ]
