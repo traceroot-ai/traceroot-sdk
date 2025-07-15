@@ -118,6 +118,57 @@ class TraceIdFilter(logging.Filter):
                 path_parts[-1]) if path_parts else "unknown"
 
 
+class SpanEventHandler(logging.Handler):
+    """Handler that adds log messages as events to the
+    current OpenTelemetry span
+    """
+
+    def emit(self, record: logging.LogRecord):
+        """Add log record as an event to the current span"""
+        try:
+            span = get_current_span()
+            if span and span.is_recording():
+                # Create attributes from the log record
+                attributes = {
+                    "log.level": record.levelname,
+                    "log.logger": record.name,
+                    "log.message": record.getMessage(),
+                    "log.module": record.module,
+                    "log.function": record.funcName,
+                    "log.lineno": record.lineno,
+                }
+
+                # Add trace correlation attributes if available
+                if hasattr(record, 'trace_id'):
+                    attributes["log.trace_id"] = record.trace_id
+                if hasattr(record, 'span_id'):
+                    attributes["log.span_id"] = record.span_id
+                if hasattr(record, 'stack_trace'):
+                    attributes["log.stack_trace"] = record.stack_trace
+
+                # Add service metadata if available
+                if hasattr(record, 'service_name'):
+                    attributes["log.service_name"] = record.service_name
+                if hasattr(record, 'environment'):
+                    attributes["log.environment"] = record.environment
+
+                # Add exception information if present
+                if record.exc_info:
+                    attributes["log.exception"] = self.formatException(
+                        record.exc_info)
+
+                # Add the log as an event to the span
+                span.add_event(
+                    name=f"log.{record.levelname.lower()}",
+                    attributes=attributes,
+                    timestamp=int(record.created *
+                                  1_000_000_000)  # Convert to nanoseconds
+                )
+        except Exception:
+            # Don't let event logging errors interfere with the application
+            pass
+
+
 class TraceRootLogger:
     """Enhanced logger with trace correlation and AWS integration"""
 
@@ -144,7 +195,10 @@ class TraceRootLogger:
         # Setup handlers
         if self.config.enable_console_export:
             self._setup_console_handler()
-        self._setup_cloudwatch_handler()
+        if not self.config.local_mode:
+            self._setup_cloudwatch_handler()
+        else:
+            self._setup_otlp_logging_handler()
 
     def _setup_console_handler(self):
         r"""Setup console logging handler"""
@@ -179,7 +233,7 @@ class TraceRootLogger:
         try:
             # Fetch AWS credentials from the endpoint
             credentials = self._fetch_aws_credentials()
-            self.config._cloudwatch_log_group = credentials['hash']
+            self.config._name = credentials['hash']
             self.config.otlp_endpoint = credentials['otlp_endpoint']
             if not credentials:
                 self.logger.error("Failed to fetch AWS credentials, "
@@ -193,14 +247,30 @@ class TraceRootLogger:
                     region_name=credentials['region'])
 
             cloudwatch_handler = watchtower.CloudWatchLogHandler(
-                log_group=self.config._cloudwatch_log_group,
-                stream_name=self.config._cloudwatch_stream_name,
+                log_group=self.config._name,
+                stream_name=self.config._sub_name,
                 boto3_client=session.client('logs'))
             cloudwatch_handler.setFormatter(self.formatter)
             cloudwatch_handler.addFilter(self.trace_filter)
             self.logger.addHandler(cloudwatch_handler)
         except Exception as e:
             self.logger.error(f"Failed to setup CloudWatch logging: {e}")
+
+    def _setup_otlp_logging_handler(self):
+        """Setup OpenTelemetry logging handler for local mode
+        that adds logs as span events to the current span.
+        """
+        try:
+            # Create a custom handler that adds log messages
+            # as events to the current span
+            span_event_handler = SpanEventHandler()
+            span_event_handler.setLevel(logging.DEBUG)
+            span_event_handler.addFilter(self.trace_filter)
+
+            self.logger.addHandler(span_event_handler)
+
+        except Exception as e:
+            self.logger.error(f"Failed to setup OpenTelemetry logging: {e}")
 
     def _increment_span_log_count(self, attribute_name: str):
         """Increment the log count attribute for the current span"""
