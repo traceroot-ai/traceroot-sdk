@@ -20,8 +20,10 @@ class TraceRootConfig:
     # User identification
     name: str | None = None
 
-    # OpenTelemetry Configuration
+    # AWS Configuration
     aws_region: str = "us-west-2"
+
+    # OpenTelemetry Configuration
     otlp_endpoint: str = "http://localhost:4318/v1/traces"
 
     # Environment
@@ -30,7 +32,10 @@ class TraceRootConfig:
     # Tracing options
     enable_console_export: bool = True
 
+    # Local mode
+    local_mode: bool = True
+
     def __post_init__(self):
-        self._cloudwatch_log_group = self.name
-        self._cloudwatch_stream_name = (f"{self.service_name}-"
-                                        f"{self.environment}")
+        self._name = self.name
+        self._sub_name = (f"{self.service_name}-"
+                          f"{self.environment}")
