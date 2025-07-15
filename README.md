@@ -73,3 +73,23 @@ Please reach out to founders@traceroot.ai or visit [TraceRoot.AI](https://tracer
 For an end-to-end example that uses the TraceRoot SDK for a multi-agent system, please refer to the [Multi-agent System with TraceRoot SDK](https://docs.traceroot.ai/essentials/journey).
 
 The source code of the multi-agent system example is available in [`traceroot-examples/examples/multi_agent`](https://github.com/traceroot-ai/traceroot-examples/tree/main/examples/multi_agent).
+
+
+## Local Development
+
+Download the Jaeger Docker image:
+```bash
+docker run cr.jaegertracing.io/jaegertracing/jaeger:2.8.0 --help
+```
+
+Run the Jaeger Docker container:
+```bash
+docker run -d --name jaeger \
+  -e COLLECTOR_OTLP_ENABLED=true \
+  -p 16686:16686 \
+  -p 14268:14268 \
+  -p 14250:14250 \
+  -p 4317:4317 \
+  -p 4318:4318 \
+  cr.jaegertracing.io/jaegertracing/jaeger:2.8.0
+```
