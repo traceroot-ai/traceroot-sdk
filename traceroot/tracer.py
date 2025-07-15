@@ -1,5 +1,3 @@
-"""Core tracing initialization and management"""
-
 import inspect
 import json
 from contextlib import contextmanager
@@ -65,17 +63,6 @@ def _initialize_tracing(**kwargs: Any) -> TracerProvider:
 
     Returns:
         TracerProvider instance
-
-    Example:
-        # With custom config
-        _initialize_tracing(
-            service_name="my-service",
-            environment="production",
-            aws_region="us-west-2"
-        )
-
-        # Or using .traceroot-config.yaml file with optional overrides
-        _initialize_tracing(environment="staging")  # Override only environment
     """
     global _tracer_provider, _config
 
@@ -121,9 +108,8 @@ def _initialize_tracing(**kwargs: Any) -> TracerProvider:
         console_processor = SimpleSpanProcessor(ConsoleSpanExporter())
         provider.add_span_processor(console_processor)
 
-    # OTLP exporter for X-Ray (via OpenTelemetry Collector)
-    otlp_exporter = OTLPSpanExporter(endpoint=config.otlp_endpoint)
-    batch_processor = BatchSpanProcessor(otlp_exporter)
+    exporter = OTLPSpanExporter(endpoint=config.otlp_endpoint)
+    batch_processor = BatchSpanProcessor(exporter)
     provider.add_span_processor(batch_processor)
 
     # Set as global tracer provider
@@ -188,7 +174,7 @@ def _trace(function: Callable, options: TraceOptions, *args: Any,
 
     with _span as span:
         # Set AWS X-Ray annotations as individual attributes
-        span.set_attribute("hash", _config._cloudwatch_log_group)
+        span.set_attribute("hash", _config._name)
         span.set_attribute("service_name", _config.service_name)
         span.set_attribute("service_environment", _config.environment)
 
