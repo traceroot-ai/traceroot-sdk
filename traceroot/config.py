@@ -33,7 +33,7 @@ class TraceRootConfig:
     enable_console_export: bool = True
 
     # Local mode
-    local_mode: bool = True
+    local_mode: bool = False
 
     def __post_init__(self):
         self._name = self.name
