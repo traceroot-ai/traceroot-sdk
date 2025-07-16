@@ -92,4 +92,6 @@ docker stop jaeger || true && docker rm jaeger || true && docker run -d --name j
   -p 4317:4317 \
   -p 4318:4318 \
   cr.jaegertracing.io/jaegertracing/jaeger:2.8.0
+
+docker logs -f jaeger
 ```
