@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "traceroot"
-version = "0.0.4a3"
-description = "A clean, principled wrapper around OpenTelemetry, AWS CloudWatch, and AWS X-Ray for enhanced debugging experience"
+version = "0.0.4a4"
+description = "The SDK that revolutionizes debugging and tracing."
 readme = "README.md"
 requires-python = ">=3.8"
 license = {text = "MIT"}
