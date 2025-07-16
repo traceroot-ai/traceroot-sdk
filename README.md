@@ -84,7 +84,7 @@ docker run cr.jaegertracing.io/jaegertracing/jaeger:2.8.0 --help
 
 Run the Jaeger Docker container:
 ```bash
-docker run -d --name jaeger \
+docker stop jaeger || true && docker rm jaeger || true && docker run -d --name jaeger \
   -e COLLECTOR_OTLP_ENABLED=true \
   -p 16686:16686 \
   -p 14268:14268 \
