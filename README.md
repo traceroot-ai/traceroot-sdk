@@ -1,9 +1,11 @@
 <div align="center">
 
 [![Documentation][docs-image]][docs-url]
+[![Discord][discord-image]][discord-url]
 [![PyPI Version][pypi-image]][pypi-url]
 [![TraceRoot.AI Website][company-website-image]][company-website-url]
 [![X][company-x-image]][company-x-url]
+[![LinkedIn][company-linkedin-image]][company-linkedin-url]
 
 
 </div>
@@ -59,15 +61,6 @@ github_commit_hash: "main"
 
 Please reach out to founders@traceroot.ai or visit [TraceRoot.AI](https://traceroot.ai) if you do not have these credentials or have any questions.
 
-[docs-image]: https://img.shields.io/badge/Documentation-0dbf43
-[docs-url]: https://docs.traceroot.ai
-[pypi-image]: https://badge.fury.io/py/traceroot.svg
-[pypi-url]: https://pypi.python.org/pypi/traceroot
-[company-website-image]: https://img.shields.io/badge/TraceRoot.AI-0dbf43
-[company-website-url]: https://traceroot.ai
-[company-x-url]: https://x.com/TracerootAI
-[company-x-image]: https://img.shields.io/twitter/follow/TracerootAI?style=social
-
 ## Examples
 
 For an end-to-end example that uses the TraceRoot SDK for a multi-agent system, please refer to the [Multi-agent System with TraceRoot SDK](https://docs.traceroot.ai/essentials/journey).
@@ -95,3 +88,16 @@ docker stop jaeger || true && docker rm jaeger || true && docker run -d --name j
 
 docker logs -f jaeger
 ```
+
+[docs-image]: https://img.shields.io/badge/Documentation-0dbf43
+[docs-url]: https://docs.traceroot.ai
+[discord-url]: https://discord.gg/CeuqGDQ58q/
+[discord-image]: https://img.shields.io/discord/1395844148568920114?logo=discord&labelColor=%235462eb&logoColor=%23f5f5f5&color=%235462eb
+[pypi-image]: https://badge.fury.io/py/traceroot.svg
+[pypi-url]: https://pypi.python.org/pypi/traceroot
+[company-website-image]: https://img.shields.io/badge/TraceRoot.AI-0dbf43
+[company-website-url]: https://traceroot.ai
+[company-x-url]: https://x.com/TracerootAI
+[company-x-image]: https://img.shields.io/twitter/follow/TracerootAI?style=social
+[company-linkedin-url]: https://www.linkedin.com/company/traceroot-ai/
+[company-linkedin-image]: https://custom-icon-badges.demolab.com/badge/LinkedIn-0A66C2?logo=linkedin-white&logoColor=fff

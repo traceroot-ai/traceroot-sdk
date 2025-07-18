@@ -1,4 +1,4 @@
-name: "traceroot-ai"
+token: "xxx"
 service_name: "sdk-example-service"
 github_owner: "traceroot-ai"
 github_repo_name: "traceroot-sdk"
