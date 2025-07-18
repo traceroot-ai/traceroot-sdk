@@ -6,6 +6,7 @@
 [![TraceRoot.AI Website][company-website-image]][company-website-url]
 [![X][company-x-image]][company-x-url]
 [![LinkedIn][company-linkedin-image]][company-linkedin-url]
+[![WhatsApp][company-whatsapp-image]][company-whatsapp-url]
 
 
 </div>
@@ -101,3 +102,5 @@ docker logs -f jaeger
 [company-x-image]: https://img.shields.io/twitter/follow/TracerootAI?style=social
 [company-linkedin-url]: https://www.linkedin.com/company/traceroot-ai/
 [company-linkedin-image]: https://custom-icon-badges.demolab.com/badge/LinkedIn-0A66C2?logo=linkedin-white&logoColor=fff
+[company-whatsapp-url]: https://chat.whatsapp.com/GzBii194psf925AEBztMir
+[company-whatsapp-image]: https://img.shields.io/badge/WhatsApp-25D366?logo=whatsapp&logoColor=white
