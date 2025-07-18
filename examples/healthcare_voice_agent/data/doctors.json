@@ -1,0 +1,76 @@
+{
+  "doctors": [
+    {
+      "id": "DR001",
+      "name": "Dr. Sarah Chen",
+      "specialty": "Internal Medicine",
+      "sub_specialty": "Primary Care",
+      "availability": {
+        "monday": ["9:00", "10:00", "14:00", "15:00"],
+        "tuesday": ["11:00", "13:00", "16:00"],
+        "wednesday": ["9:00", "10:00", "11:00", "14:00"],
+        "thursday": ["13:00", "14:00", "15:00", "16:00"],
+        "friday": ["9:00", "10:00", "11:00", "13:00"]
+      },
+      "next_available": "2024-03-25 09:00",
+      "languages": ["English", "Mandarin"],
+      "accepting_new_patients": true
+    },
+    {
+      "id": "DR002",
+      "name": "Dr. Michael Rodriguez",
+      "specialty": "Neurology",
+      "sub_specialty": "Headache Medicine",
+      "availability": {
+        "monday": ["11:00", "13:00", "14:00"],
+        "wednesday": ["9:00", "10:00", "15:00"],
+        "friday": ["10:00", "11:00", "14:00", "15:00"]
+      },
+      "next_available": "2024-03-26 11:00",
+      "languages": ["English", "Spanish"],
+      "accepting_new_patients": true
+    },
+    {
+      "id": "DR003",
+      "name": "Dr. Emily Thompson",
+      "specialty": "Cardiology",
+      "sub_specialty": "General Cardiology",
+      "availability": {
+        "tuesday": ["9:00", "10:00", "11:00"],
+        "thursday": ["13:00", "14:00", "15:00"],
+        "friday": ["9:00", "10:00", "11:00"]
+      },
+      "next_available": "2024-03-26 09:00",
+      "languages": ["English"],
+      "accepting_new_patients": true
+    },
+    {
+      "id": "DR004",
+      "name": "Dr. James Wilson",
+      "specialty": "Family Medicine",
+      "sub_specialty": "Geriatrics",
+      "availability": {
+        "monday": ["9:00", "10:00", "11:00"],
+        "tuesday": ["13:00", "14:00", "15:00"],
+        "thursday": ["9:00", "10:00", "11:00"]
+      },
+      "next_available": "2024-03-25 09:00",
+      "languages": ["English"],
+      "accepting_new_patients": false
+    },
+    {
+      "id": "DR005",
+      "name": "Dr. Aisha Patel",
+      "specialty": "Endocrinology",
+      "sub_specialty": "Diabetes Care",
+      "availability": {
+        "wednesday": ["13:00", "14:00", "15:00"],
+        "thursday": ["9:00", "10:00", "11:00"],
+        "friday": ["13:00", "14:00", "15:00"]
+      },
+      "next_available": "2024-03-27 13:00",
+      "languages": ["English", "Hindi", "Gujarati"],
+      "accepting_new_patients": true
+    }
+  ]
+} 
