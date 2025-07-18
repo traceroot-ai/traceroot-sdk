@@ -96,7 +96,7 @@ docker logs -f jaeger
 [discord-image]: https://img.shields.io/discord/1395844148568920114?logo=discord&labelColor=%235462eb&logoColor=%23f5f5f5&color=%235462eb
 [pypi-image]: https://badge.fury.io/py/traceroot.svg
 [pypi-url]: https://pypi.python.org/pypi/traceroot
-[company-website-image]: https://img.shields.io/badge/TraceRoot.AI-0dbf43
+[company-website-image]: https://img.shields.io/badge/TraceRoot.AI-148740
 [company-website-url]: https://traceroot.ai
 [company-x-url]: https://x.com/TracerootAI
 [company-x-image]: https://img.shields.io/twitter/follow/TracerootAI?style=social
