@@ -208,7 +208,7 @@ class TraceRootLogger:
     def _fetch_aws_credentials(self) -> dict:
         """Fetch AWS credentials from the traceroot endpoint"""
         try:
-            url = "http://3.23.162.117:8000/v1/verify/credentials"
+            url = "https://api.test.traceroot.ai/v1/verify/credentials"
             params = {"token": self.config.token}
             headers = {"Content-Type": "application/json"}
 
