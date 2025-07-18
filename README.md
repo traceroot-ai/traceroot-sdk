@@ -3,6 +3,7 @@
 [![Documentation][docs-image]][docs-url]
 [![Discord][discord-image]][discord-url]
 [![PyPI Version][pypi-image]][pypi-url]
+[![PyPI SDK Downloads][pypi-sdk-downloads-image]][pypi-sdk-downloads-url]
 [![TraceRoot.AI Website][company-website-image]][company-website-url]
 [![X][company-x-image]][company-x-url]
 [![LinkedIn][company-linkedin-image]][company-linkedin-url]
@@ -104,3 +105,5 @@ docker logs -f jaeger
 [company-linkedin-image]: https://custom-icon-badges.demolab.com/badge/LinkedIn-0A66C2?logo=linkedin-white&logoColor=fff
 [company-whatsapp-url]: https://chat.whatsapp.com/GzBii194psf925AEBztMir
 [company-whatsapp-image]: https://img.shields.io/badge/WhatsApp-25D366?logo=whatsapp&logoColor=white
+[pypi-sdk-downloads-image]: https://img.shields.io/pypi/dm/traceroot
+[pypi-sdk-downloads-url]: https://pypi.python.org/pypi/traceroot
