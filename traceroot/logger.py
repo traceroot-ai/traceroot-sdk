@@ -193,7 +193,7 @@ class TraceRootLogger:
         self.trace_filter = TraceIdFilter(config)
 
         # Setup handlers
-        if self.config.enable_console_export:
+        if self.config.enable_log_console_export:
             self._setup_console_handler()
         if not self.config.local_mode:
             self._setup_cloudwatch_handler()

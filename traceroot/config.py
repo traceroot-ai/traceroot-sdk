@@ -30,7 +30,8 @@ class TraceRootConfig:
     environment: str = "development"
 
     # Tracing options
-    enable_console_export: bool = True
+    enable_span_console_export: bool = False
+    enable_log_console_export: bool = False
 
     # Local mode
     local_mode: bool = False
