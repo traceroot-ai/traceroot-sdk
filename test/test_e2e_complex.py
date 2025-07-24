@@ -33,7 +33,8 @@ traceroot.init(
     environment="test",
     aws_region="us-west-2",
     otlp_endpoint="http://localhost:4318/v1/traces",
-    enable_console_export=True,
+    enable_span_console_export=True,
+    enable_log_console_export=True,
 )
 
 logger = get_logger()

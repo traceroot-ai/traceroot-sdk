@@ -6,5 +6,5 @@ python-dotenv==1.1.1
 speechrecognition[whisper-local]==3.14.3
 coqui-tts==0.26.2
 numpy==2.0.0
-soundfile==0.12.1 
+soundfile==0.12.1
 traceroot==0.0.4a5

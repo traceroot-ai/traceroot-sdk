@@ -1,3 +1,3 @@
 """
 Voice agent example implementation.
-""" 
+"""

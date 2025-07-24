@@ -3,12 +3,10 @@ import json
 from contextlib import contextmanager
 from dataclasses import dataclass
 from functools import wraps
-from pathlib import Path
 from typing import Any, Callable, Sequence
 
 import opentelemetry
 import pandas as pd
-import yaml
 from opentelemetry import trace as otel_trace
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import \
     OTLPSpanExporter
@@ -21,7 +19,7 @@ from opentelemetry.trace import get_current_span
 
 from traceroot.config import TraceRootConfig
 from traceroot.logger import initialize_logger
-from traceroot.utils.io import list_parent_folders, list_sub_folders
+from traceroot.utils.config import find_traceroot_config
 
 # Global state
 _tracer_provider: TracerProvider | None = None
@@ -71,7 +69,7 @@ def _initialize_tracing(**kwargs: Any) -> TracerProvider:
         return _tracer_provider
 
     # Load configuration from YAML file first
-    yaml_config = _find_traceroot_config()
+    yaml_config = find_traceroot_config()
 
     # Merge YAML config with kwargs (kwargs take precedence)
     if yaml_config:
@@ -104,7 +102,7 @@ def _initialize_tracing(**kwargs: Any) -> TracerProvider:
     provider = TracerProvider(resource=resource)
 
     # Add span processors based on configuration
-    if config.enable_console_export:
+    if config.enable_span_console_export:
         console_processor = SimpleSpanProcessor(ConsoleSpanExporter())
         provider.add_span_processor(console_processor)
 
@@ -295,49 +293,3 @@ def _flatten_dict(data: dict[str, Any], sep: str = "_") -> dict[str, Any]:
     """Flattens a dictionary, joining parent/child keys with `sep`."""
     flattened = pd.json_normalize(data, sep=sep).to_dict(orient="records")
     return flattened[0] if len(flattened) > 0 else {}
-
-
-def _find_traceroot_config() -> dict[str, Any] | None:
-    """Find and load the .traceroot-config.yaml file.
-
-    Searches the current directory for the configuration file.
-
-    Returns:
-        Dictionary containing the configuration, or None if no file found.
-    """
-    config_filename = ".traceroot-config.yaml"
-
-    # Check current working directory
-    current_path = Path.cwd()
-    config_path = current_path / config_filename
-
-    if config_path.exists():
-        try:
-            with open(config_path) as file:
-                config_data = yaml.safe_load(file)
-                return config_data if config_data else {}
-        except (yaml.YAMLError, OSError) as e:
-            raise ValueError(f"Error reading config file {config_path}: {e}")
-
-    # Check subfolders for config file up to 4 levels
-    sub_folders = list_sub_folders(4, config_filename, current_path)
-    for config_path in sub_folders:
-        try:
-            with open(config_path) as file:
-                config_data = yaml.safe_load(file)
-                return config_data if config_data else {}
-        except (yaml.YAMLError, OSError) as e:
-            raise ValueError(f"Error reading config file "
-                             f"{config_path}: {e}")
-
-    # Check parent folders for config file up to 4 levels
-    parent_folders = list_parent_folders(4, config_filename, current_path)
-    for config_path in parent_folders:
-        try:
-            with open(config_path) as file:
-                config_data = yaml.safe_load(file)
-                return config_data if config_data else {}
-        except (yaml.YAMLError, OSError) as e:
-            raise ValueError(f"Error reading config file "
-                             f"{config_path}: {e}")
-    return None

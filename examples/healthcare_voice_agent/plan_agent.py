@@ -1,10 +1,11 @@
-from typing import Any, Optional
+from typing import Any
 
-import traceroot
 from dotenv import load_dotenv
 from langchain.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
+
+import traceroot
 from traceroot.tracer import TraceOptions, trace
 
 load_dotenv()
@@ -14,9 +15,14 @@ logger = traceroot.get_logger()
 
 class VoicePlanResponse(BaseModel):
     """Structured response model for the healthcare voice planning agent"""
-    plan: str = Field(description="Detailed plan for responding to the patient query")
-    response_type: str = Field(description="Type of response needed: 'health_info', 'symptom_guidance', 'urgent_care_advisory', 'wellness_advice'")
-    tone: str = Field(description="Suggested tone for the response: 'professional_caring', 'empathetic_informative', 'calm_reassuring'")
+    plan: str = Field(
+        description="Detailed plan for responding to the patient query")
+    response_type: str = Field(description=(
+        "Type of response needed: 'health_info', 'symptom_guidance', "
+        "'urgent_care_advisory', 'wellness_advice'"))
+    tone: str = Field(description=(
+        "Suggested tone for the response: "
+        "'professional_caring', 'empathetic_informative', 'calm_reassuring'"))
 
 
 class VoicePlanAgent:
@@ -29,31 +35,34 @@ class VoicePlanAgent:
             "Your job is to analyze patient queries and create plans "
             "for generating appropriate healthcare responses. "
             "IMPORTANT GUIDELINES for healthcare planning: "
-            "1. Assess query urgency and severity "
-            "2. Include necessary medical disclaimers "
-            "3. Plan responses that balance empathy with professionalism "
-            "4. Structure information in easily digestible segments "
-            "5. Include recommendations for professional medical care when appropriate "
-            "6. Never plan to provide specific diagnoses "
-            "7. Consider patient anxiety and emotional state "
-            "8. Plan to explain medical terms in simple language "
-            "9. Ensure HIPAA compliance in responses "
-            "10. Include wellness and preventive advice when relevant "
-            "Remember this will be spoken to a patient seeking health guidance."
-        )
+            "1. Assess query urgency and severity\n"
+            "2. Include necessary medical disclaimers\n"
+            "3. Plan responses that balance empathy with professionalism\n"
+            "4. Structure information in easily digestible segments\n"
+            "5. Include recommendations for professional medical "
+            "care when appropriate\n"
+            "6. Never plan to provide specific diagnoses\n"
+            "7. Consider patient anxiety and emotional state\n"
+            "8. Plan to explain medical terms in simple language\n"
+            "9. Ensure HIPAA compliance in responses\n"
+            "10. Include wellness and preventive advice when relevant\n"
+            "Remember this will be spoken to a patient seeking health "
+            "guidance.")
         self.plan_prompt = ChatPromptTemplate.from_messages([
-            ("system", self.system_prompt), 
-            ("human", "Patient query transcript: {transcript}\n\nCreate a plan for responding to this healthcare query.")
+            ("system", self.system_prompt),
+            ("human",
+             ("Patient query transcript: {transcript}\n\n"
+              "Create a plan for responding to this healthcare query."))
         ])
 
     @trace(TraceOptions(trace_params=True, trace_return_value=True))
     def plan_voice_response(self, transcript: str) -> dict[str, Any]:
         """
         Analyze patient transcript and create response plan
-        
+
         Args:
             transcript: The transcribed text from patient input
-            
+
         Returns:
             Dict containing plan details for healthcare response generation
         """
@@ -79,4 +88,4 @@ class VoicePlanAgent:
 
 
 def create_voice_plan_agent():
-    return VoicePlanAgent() 
+    return VoicePlanAgent()
