@@ -141,7 +141,7 @@ The source code of the multi-agent system example is available in [`traceroot-ex
 
 ## Citation
 
-If you use the TraceRoot SDK in your research, please cite the following paper:
+If you use our exploratory TraceRoot SDK in your research, please cite the following paper:
 
 ```bibtex
 @article{traceroot_2025,
