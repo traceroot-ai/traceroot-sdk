@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "traceroot"
-version = "0.0.4a6"
+version = "0.0.4a7"
 description = "The SDK that revolutionizes debugging and tracing."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -105,5 +105,5 @@ zip-safe = false
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["traceroot*", "integrations*"]
+include = ["traceroot*"]
 exclude = ["tests*"]
