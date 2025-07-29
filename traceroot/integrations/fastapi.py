@@ -63,6 +63,7 @@ def connect_fastapi(app: FastAPI) -> None:
         """Hook called when making outbound requests"""
         if span and span.is_recording():
             span.set_attribute("service.name", config.service_name)
+            span.set_attribute("telemetry.sdk.language", "python")
 
             # TODO (xinwei): This is might be the same as the information in
             # server_request_hook. Let's check and deprecate it as necessary.
@@ -90,6 +91,7 @@ def connect_fastapi(app: FastAPI) -> None:
         """
         if span and span.is_recording():
             span.set_attribute("service.name", config.service_name)
+            span.set_attribute("telemetry.sdk.language", "python")
             body = message.get('body', '')
             if body:
                 # Only log first 1000 chars of body to avoid huge spans

@@ -2,7 +2,7 @@ from traceroot.logger import get_logger
 from traceroot.tracer import _initialize_tracing as init
 from traceroot.tracer import trace
 
-__version__ = '0.0.4a6'
+__version__ = '0.0.4a8'
 
 init()
 
