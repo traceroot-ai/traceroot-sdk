@@ -18,7 +18,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 import traceroot
-from integrations.fastapi import connect_fastapi
+from traceroot.integrations.fastapi import connect_fastapi
 from traceroot.logger import get_logger
 from traceroot.tracer import (TraceOptions, trace,
                               write_attributes_to_current_span)

@@ -105,5 +105,5 @@ zip-safe = false
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["traceroot*", "integrations*"]
+include = ["traceroot*"]
 exclude = ["tests*"]
