@@ -96,6 +96,7 @@ def _initialize_tracing(**kwargs: Any) -> TracerProvider:
             "service.github_repo_name": config.github_repo_name,
             "service.version": config.github_commit_hash,
             "service.environment": config.environment,
+            "telemetry.sdk.language": "python",
         })
 
     # Create tracer provider
@@ -177,6 +178,7 @@ def _trace(function: Callable, options: TraceOptions, *args: Any,
             span.set_attribute("hash", _config._name)
         span.set_attribute("service_name", _config.service_name)
         span.set_attribute("service_environment", _config.environment)
+        span.set_attribute("telemetry_sdk_language", "python")
 
         # Add parameter attributes if requested
         if options.trace_params:
