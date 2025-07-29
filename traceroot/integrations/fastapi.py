@@ -48,6 +48,7 @@ def connect_fastapi(app: FastAPI) -> None:
                                config.github_repo_name)
             span.set_attribute("service.version", config.github_commit_hash)
             span.set_attribute("service.environment", config.environment)
+            span.set_attribute("telemetry.sdk.language", "python")
 
             # Add request path
             path = scope.get('path', '')
