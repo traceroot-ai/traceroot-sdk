@@ -230,6 +230,7 @@ class TraceRootLogger:
 
     def _setup_cloudwatch_handler(self):
         r"""Setup CloudWatch logging handler"""
+        global _cloudwatch_handler
         try:
             # Fetch AWS credentials from the endpoint
             credentials = self._fetch_aws_credentials()
@@ -249,10 +250,19 @@ class TraceRootLogger:
             cloudwatch_handler = watchtower.CloudWatchLogHandler(
                 log_group=self.config._name,
                 stream_name=self.config._sub_name,
-                boto3_client=session.client('logs'))
+                boto3_client=session.client('logs'),
+                # Disable queues to prevent background thread issues
+                send_interval=0.05,
+                max_batch_size=1,
+                max_batch_count=1,
+                create_log_group=True,
+                use_queues=False)
             cloudwatch_handler.setFormatter(self.formatter)
             cloudwatch_handler.addFilter(self.trace_filter)
             self.logger.addHandler(cloudwatch_handler)
+
+            # Store reference for proper shutdown
+            _cloudwatch_handler = cloudwatch_handler
         except Exception as e:
             self.logger.error(f"Failed to setup CloudWatch logging: {e}")
 
@@ -313,6 +323,7 @@ class TraceRootLogger:
 
 # Global logger instance
 _global_logger: Optional[TraceRootLogger] = None
+_cloudwatch_handler: Optional[watchtower.CloudWatchLogHandler] = None
 
 
 def initialize_logger(config: TraceRootConfig) -> TraceRootLogger:
@@ -320,6 +331,45 @@ def initialize_logger(config: TraceRootConfig) -> TraceRootLogger:
     global _global_logger
     _global_logger = TraceRootLogger(config)
     return _global_logger
+
+
+def shutdown_logger() -> None:
+    """
+    Shutdown logger and flush any pending log messages.
+
+    This should be called when your application is shutting down
+    to ensure all logs are properly sent and avoid watchtower warnings.
+    """
+    import time
+    global _global_logger, _cloudwatch_handler
+
+    if _cloudwatch_handler is not None:
+        try:
+            # Flush any pending messages multiple times to be aggressive
+            _cloudwatch_handler.flush()
+            time.sleep(0.2)  # Give time for flush to complete
+            _cloudwatch_handler.flush()
+            time.sleep(0.1)  # Additional time
+            # Close the handler to stop background threads
+            _cloudwatch_handler.close()
+        except Exception:
+            # Ignore errors during shutdown
+            pass
+        finally:
+            _cloudwatch_handler = None
+
+    if _global_logger is not None:
+        # Remove all handlers from the logger
+        for handler in _global_logger.logger.handlers[:]:
+            try:
+                if hasattr(handler, 'flush'):
+                    handler.flush()
+                handler.close()
+                _global_logger.logger.removeHandler(handler)
+            except Exception:
+                # Ignore errors during shutdown
+                pass
+        _global_logger = None
 
 
 def get_logger(name: Optional[str] = None) -> TraceRootLogger:
