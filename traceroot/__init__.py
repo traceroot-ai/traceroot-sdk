@@ -1,8 +1,8 @@
 from traceroot.logger import get_logger
 from traceroot.tracer import _initialize_tracing as init
-from traceroot.tracer import trace
+from traceroot.tracer import shutdown, trace
 
-__version__ = '0.0.4a8'
+__version__ = '0.0.4a9'
 
 init()
 
@@ -10,4 +10,5 @@ __all__ = [
     'init',
     'trace',
     'get_logger',
+    'shutdown',
 ]

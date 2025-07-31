@@ -7,14 +7,14 @@ from opentelemetry.trace import Span
 from traceroot.tracer import get_config, get_tracer_provider
 
 
-# TODO(xinwei): This this setup does not work with microservices.
-# Let's try to fix it with opentelemetry baggages.
 def connect_fastapi(app: FastAPI) -> None:
     """
-    Setup automatic tracing for FastAPI application.
+    Setup automatic tracing for FastAPI application with distributed tracing
+    support.
 
-    This adds middleware to automatically trace all HTTP requests
-    and correlate them with logs.
+    This adds middleware to automatically trace all HTTP requests,
+    correlate them with logs, and properly handle incoming trace context
+    from other services in a microservice architecture.
 
     Args:
         app: FastAPI application instance

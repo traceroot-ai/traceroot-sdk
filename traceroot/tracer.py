@@ -8,17 +8,22 @@ from typing import Any, Callable, Sequence
 import opentelemetry
 import pandas as pd
 from opentelemetry import trace as otel_trace
+from opentelemetry.baggage.propagation import W3CBaggagePropagator
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import \
     OTLPSpanExporter
+from opentelemetry.propagate import set_global_textmap
+from opentelemetry.propagators.composite import CompositePropagator
 from opentelemetry.sdk.resources import SERVICE_NAME, Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import (BatchSpanProcessor,
                                             ConsoleSpanExporter,
                                             SimpleSpanProcessor)
 from opentelemetry.trace import get_current_span
+from opentelemetry.trace.propagation.tracecontext import \
+    TraceContextTextMapPropagator
 
 from traceroot.config import TraceRootConfig
-from traceroot.logger import initialize_logger
+from traceroot.logger import initialize_logger, shutdown_logger
 from traceroot.utils.config import find_traceroot_config
 
 # Global state
@@ -115,6 +120,17 @@ def _initialize_tracing(**kwargs: Any) -> TracerProvider:
     otel_trace.set_tracer_provider(provider)
     _tracer_provider = provider
 
+    # Configure propagators to enable distributed tracing
+    # This is crucial for FastAPI to properly extract trace context from
+    # HTTP headers
+    # and create child spans instead of new root spans
+    propagator = CompositePropagator([
+        TraceContextTextMapPropagator(
+        ),  # Handles traceparent/tracestate headers (W3C Trace Context)
+        W3CBaggagePropagator(),  # Handles baggage header (W3C Baggage)
+    ])
+    set_global_textmap(propagator)
+
     return provider
 
 
@@ -130,6 +146,18 @@ def shutdown_tracing() -> None:
     if _tracer_provider is not None:
         _tracer_provider.shutdown()
         _tracer_provider = None
+
+
+def shutdown() -> None:
+    """
+    Shutdown both tracing and logging systems.
+
+    This should be called when your application is shutting down
+    to ensure all traces and logs are properly exported and to avoid
+    warnings about messages sent after logging system shutdown.
+    """
+    shutdown_logger()
+    shutdown_tracing()
 
 
 def is_initialized() -> bool:
@@ -164,7 +192,6 @@ def _trace(function: Callable, options: TraceOptions, *args: Any,
         _span_name = options.get_span_name(function)
 
         # Create and start new span
-
         _span = tracer.start_as_current_span(_span_name)
     except Exception:
         # If span creation fails, yield None and continue without tracing
