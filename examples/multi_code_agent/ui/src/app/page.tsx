@@ -24,7 +24,7 @@ export default function ChatbotPage() {
   const sendCodeRequest = async (query: string): Promise<string> => {
     try {
       console.log('📡 Sending code request:', { query });
-      
+
       const response = await fetch('/api/code', {
         method: 'POST',
         headers: {
@@ -39,7 +39,7 @@ export default function ChatbotPage() {
 
       const result = await response.json();
       console.log('✅ Code request completed:', result);
-      
+
       return result.response || result.error || 'No response received';
     } catch (error: any) {
       console.error('❌ Code request failed:', error);
@@ -49,7 +49,7 @@ export default function ChatbotPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!inputText.trim() || isLoading) return;
 
     if (!isTracerootInitialized) {
@@ -70,7 +70,7 @@ export default function ChatbotPage() {
 
     try {
       const response = await sendCodeRequest(userMessage.text);
-      
+
       const botMessage: Message = {
         id: (Date.now() + 1).toString(),
         text: response,

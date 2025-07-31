@@ -28,7 +28,7 @@ async function initializeTraceroot() {
 const makeTracedCodeRequest = async (query: string): Promise<any> => {
   try {
     console.log('📡 Making request to code agent:', { query });
-    
+
     // Log with traceroot if available
     if (tracerootLogger) {
       tracerootLogger.info('📡 Making request to code agent', { query });
@@ -40,7 +40,7 @@ const makeTracedCodeRequest = async (query: string): Promise<any> => {
       try {
         traceHeaders = traceroot.getTraceHeaders();
         const spanInfo = traceroot.getActiveSpanInfo();
-        
+
         console.log('🔗 Trace Context:', {
           headerCount: Object.keys(traceHeaders).length,
           hasSpanInfo: !!spanInfo
@@ -72,21 +72,21 @@ const makeTracedCodeRequest = async (query: string): Promise<any> => {
     if (!response.ok) {
       const errorText = await response.text();
       console.error('❌ Response error:', errorText);
-      
+
       if (tracerootLogger) {
-        tracerootLogger.error('❌ Code agent request failed', { 
-          status: response.status, 
-          error: errorText 
+        tracerootLogger.error('❌ Code agent request failed', {
+          status: response.status,
+          error: errorText
         });
       }
-      
+
       throw new Error(`HTTP error! status: ${response.status}, body: ${errorText}`);
     }
 
     const result = await response.json();
-    console.log('✅ Code agent request completed:', { 
+    console.log('✅ Code agent request completed:', {
       hasResponse: !!result.response,
-      hasError: !!result.error 
+      hasError: !!result.error
     });
 
     if (tracerootLogger) {
@@ -99,11 +99,11 @@ const makeTracedCodeRequest = async (query: string): Promise<any> => {
     return result;
   } catch (error: any) {
     console.error('❌ Code agent request failed:', error.message);
-    
+
     if (tracerootLogger) {
       tracerootLogger.error('❌ Code agent request failed', { error: error.message });
     }
-    
+
     throw error;
   }
 };
@@ -135,7 +135,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     console.log('📄 Request body:', body);
-    
+
     const { query } = body;
 
     if (!query) {
@@ -147,7 +147,7 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('🤖 Processing code generation request:', { query });
-    
+
     if (tracerootLogger) {
       tracerootLogger.info('🤖 Received code generation request', { query });
     }
@@ -159,11 +159,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(result);
   } catch (error: any) {
     console.error('❌ API route error:', error.message, error.stack);
-    
+
     if (tracerootLogger) {
       tracerootLogger.error('❌ API route error', { error: error.message });
     }
-    
+
     return NextResponse.json(
       { error: `Failed to process request: ${error.message}` },
       { status: 500 }
@@ -186,7 +186,7 @@ export async function GET() {
       body: JSON.stringify({ query: 'test connection' }),
     });
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       message: 'Code Agent API Proxy with Traceroot',
       status: 'ready',
       tracerootInitialized,
@@ -194,7 +194,7 @@ export async function GET() {
       codeAgentStatus: testResponse.status
     });
   } catch (error: any) {
-    return NextResponse.json({ 
+    return NextResponse.json({
       message: 'Code Agent API Proxy with Traceroot',
       status: 'error',
       error: error.message,

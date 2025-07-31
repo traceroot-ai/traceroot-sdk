@@ -13,7 +13,7 @@ const nextConfig: NextConfig = {
         'path': 'commonjs path',
         'os': 'commonjs os'
       });
-      
+
       // Resolve modules properly
       config.resolve.fallback = {
         ...config.resolve.fallback,
@@ -23,7 +23,7 @@ const nextConfig: NextConfig = {
         http2: false,
       };
     }
-    
+
     return config;
   },
   experimental: {
