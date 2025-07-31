@@ -8,7 +8,7 @@ version = "0.0.4a9"
 description = "The SDK that revolutionizes debugging and tracing."
 readme = "README.md"
 requires-python = ">=3.10"
-license = {text = "MIT"}
+license = {text = "Apache-2.0"}
 authors = [
     {name = "TraceRoot Team"},
 ]
@@ -16,7 +16,7 @@ keywords = ["artificial-intelligence", "agent-systems", "opentelemetry", "tracin
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
+    "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
@@ -52,14 +52,13 @@ dev = [
     "pytest==8.4.1",
     "pytest-asyncio==1.1.0",
     "black==25.1.0",
+    "pre-commit==4.2.0",
     "flake8==7.3.0",
     "mypy==1.17.0",
 ]
 fastapi = [
     "fastapi==0.115.12",
     "uvicorn==0.34.3",
-    "pre-commit==4.2.0",
-    "pytest==8.4.1",
     "httpx==0.27.0",
     "opentelemetry-instrumentation-fastapi==0.55b1",
 ]
