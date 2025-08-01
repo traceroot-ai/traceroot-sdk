@@ -53,7 +53,7 @@ export default function ChatbotPage() {
     if (!inputText.trim() || isLoading) return;
 
     if (!isTracerootInitialized) {
-      alert('Traceroot is not initialized yet. Please wait a moment and try again.');
+      alert('TraceRoot is not initialized yet. Please wait a moment and try again.');
       return;
     }
 
@@ -107,7 +107,7 @@ export default function ChatbotPage() {
           <div className="flex items-center gap-2 mt-2">
             <div className={`w-2 h-2 rounded-full ${isTracerootInitialized ? 'bg-green-500' : 'bg-red-500'}`}></div>
             <span className="text-xs text-gray-500 dark:text-gray-400">
-              Traceroot: {isTracerootInitialized ? 'Ready (Server-side)' : 'Initializing...'}
+              TraceRoot: {isTracerootInitialized ? 'Ready (Server-side)' : 'Initializing...'}
             </span>
           </div>
         </div>
@@ -123,7 +123,7 @@ export default function ChatbotPage() {
                   Welcome to Code Agent!
                 </h2>
                 <p className="text-gray-600 dark:text-gray-400 text-sm">
-                  Ask me to write code for you. For example: "Write a Python function to calculate fibonacci numbers"
+                  Ask me to write code for you. For example: "Given an m x n matrix, return all elements of the matrix in spiral order, where m = 1000000000 and n = 1000000000."
                 </p>
               </div>
             </div>

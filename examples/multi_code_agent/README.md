@@ -29,6 +29,7 @@ curl -X POST "http://localhost:9999/code" \
 # Run UI
 
 ```bash
+NEXT_OTEL_VERBOSE=1
 cd ../../
 cd examples/multi_code_agent/ui
 npm install
