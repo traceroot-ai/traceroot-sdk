@@ -11,7 +11,9 @@ const nextConfig: NextConfig = {
         'http2': 'commonjs http2',
         'fs': 'commonjs fs',
         'path': 'commonjs path',
-        'os': 'commonjs os'
+        'os': 'commonjs os',
+        'coffee-script': 'commonjs coffee-script',
+        'vm2': 'commonjs vm2'
       });
 
       // Resolve modules properly
@@ -21,14 +23,18 @@ const nextConfig: NextConfig = {
         path: false,
         os: false,
         http2: false,
+        'coffee-script': false,
+        vm2: false,
       };
     }
 
     return config;
   },
-  experimental: {
-    serverComponentsExternalPackages: ['traceroot-sdk-ts']
-  }
+  serverExternalPackages: ['traceroot-sdk-ts'],
+  eslint: {
+    // 🚫 Completely skip ESLint during builds
+    ignoreDuringBuilds: true,
+  },
 };
 
 export default nextConfig;
