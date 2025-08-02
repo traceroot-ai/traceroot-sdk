@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import * as traceroot from 'traceroot-sdk-ts';
+import { request } from 'undici';
 
 // Initialize traceroot with robust error handling
 let tracerootInitialized = false;
@@ -8,6 +9,7 @@ let tracerootLogger: any = null;
 async function initializeTraceroot() {
   if (!tracerootInitialized) {
     try {
+      // Initialize traceroot (using undici instead of fetch to avoid Next.js instrumentation)
       await traceroot.init();
       tracerootLogger = traceroot.get_logger();
       tracerootInitialized = true;
@@ -58,7 +60,8 @@ const makeTracedCodeRequest = async (query: string): Promise<any> => {
       }
     }
 
-    const response = await fetch('http://localhost:9999/code', {
+    // Use undici instead of fetch to avoid Next.js automatic instrumentation
+    const { statusCode, headers: responseHeaders, body } = await request('http://localhost:9999/code', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -66,6 +69,14 @@ const makeTracedCodeRequest = async (query: string): Promise<any> => {
       },
       body: JSON.stringify({ query }),
     });
+
+    // Convert undici response to fetch-like response
+    const response = {
+      ok: statusCode >= 200 && statusCode < 300,
+      status: statusCode,
+      json: async () => JSON.parse(await body.text()),
+      text: async () => body.text(),
+    };
 
     console.log('📡 Response status:', response.status);
 
@@ -177,14 +188,19 @@ export async function GET() {
     // Initialize traceroot for status check
     await initializeTraceroot();
 
-    // Test connectivity to the code agent
-    const testResponse = await fetch('http://localhost:9999/code', {
+    // Test connectivity to the code agent using undici (no Next.js instrumentation)
+    const { statusCode } = await request('http://localhost:9999/code', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ query: 'test connection' }),
     });
+
+    const testResponse = {
+      ok: statusCode >= 200 && statusCode < 300,
+      status: statusCode,
+    };
 
     return NextResponse.json({
       message: 'Code Agent API Proxy with Traceroot',
