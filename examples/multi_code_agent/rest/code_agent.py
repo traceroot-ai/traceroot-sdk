@@ -24,8 +24,7 @@ class CodeAgent:
             "Python environment\n"
             "4. If the task requires external libraries, use "
             "common ones like requests, pandas, numpy, etc.\n"
-            "5. Return only the Python code, no explanations "
-            "unless in comments\n"
+            "5. Return only the Python code, no explanations unless in comments\n"
             "6. If historical context is provided, learn from "
             "previous failures and avoid repeating the same mistakes\n"
             "Your response should be ONLY the Python code "
@@ -52,21 +51,22 @@ class CodeAgent:
         response = chain.invoke({
             "query": query,
             "plan": plan,
-            "historical_context": historical_context
+            "historical_context": historical_context,
         })
 
         # Clean up the response to extract just the code
         code = response.content.strip()
 
-        # Remove markdown code blocks if present
+        # Remove markdown code blocks if present (including language specifiers)
         if code.startswith("```python"):
             code = code[9:]
         elif code.startswith("```"):
             code = code[3:]
-
+        # Remove any trailing markdown fences
         if code.endswith("```"):
             code = code[:-3]
-
+        # Ensure any residual backticks are removed (e.g., stray ``) from the code
+        code = code.replace("`", "")
         code = code.strip()
         logger.info(f"Generated code:\n{code}")
         return code
