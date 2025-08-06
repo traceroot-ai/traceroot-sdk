@@ -1,8 +1,8 @@
 from dotenv import load_dotenv
 from langchain.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
-
 import traceroot
+import re
 
 load_dotenv()
 
@@ -20,16 +20,11 @@ class CodeAgent:
             "IMPORTANT GUIDELINES:\n"
             "1. Write clean, executable Python code\n"
             "2. Include necessary imports\n"
-            "3. Make sure the code can be executed in a "
-            "Python environment\n"
-            "4. If the task requires external libraries, use "
-            "common ones like requests, pandas, numpy, etc.\n"
-            "5. Return only the Python code, no explanations "
-            "unless in comments\n"
-            "6. If historical context is provided, learn from "
-            "previous failures and avoid repeating the same mistakes\n"
-            "Your response should be ONLY the Python code "
-            "that solves the problem.")
+            "3. Ensure code runs in a Python env\n"
+            "4. Use common libraries if needed\n"
+            "5. Return only code, no explanations unless comments\n"
+            "6. Use historical context to avoid repeats\n"
+            "Your response should be ONLY the Python code that solves the problem.")
         self.code_prompt = ChatPromptTemplate.from_messages([
             ("system", self.system_prompt),
             ("human", ("{query}\n\nPlan: {plan}\n\n"
@@ -52,25 +47,22 @@ class CodeAgent:
         response = chain.invoke({
             "query": query,
             "plan": plan,
-            "historical_context": historical_context
+            "historical_context": historical_context,
         })
 
-        # Clean up the response to extract just the code
+        # Extract code, cleaning markdown fences if present
         code = response.content.strip()
-
-        # Remove markdown code blocks if present
+        # Remove leading markdown fences
         if code.startswith("```python"):
             code = code[9:]
         elif code.startswith("```"):
             code = code[3:]
-
+        # Remove trailing markdown fences and any surrounding whitespace
         if code.endswith("```"):
             code = code[:-3]
-
         code = code.strip()
         logger.info(f"Generated code:\n{code}")
         return code
-
 
 def create_code_agent():
     return CodeAgent()
