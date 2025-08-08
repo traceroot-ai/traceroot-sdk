@@ -1,4 +1,4 @@
-# TraceRoot Integration Rules
+# TraceRoot Integration Rules for Cursor
 
 ## Overview
 
