@@ -1,9 +1,8 @@
 import os
-import logging
 from typing import Dict
 
 import uvicorn
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.routing import APIRouter
 from pydantic import BaseModel
 from rest.main import MultiAgentSystem
@@ -12,14 +11,15 @@ import traceroot
 from traceroot.integrations.fastapi import connect_fastapi
 from traceroot.logger import get_logger
 
-
 # Set up traceroot logging
 logger = get_logger()
+
 
 # Dependency functions
 async def get_system():
     """Dependency to provide the MultiAgentSystem"""
     return system
+
 
 # Initialize FastAPI app
 app = FastAPI(title="TraceRoot Multi-Agent Code Server V2")
@@ -31,14 +31,15 @@ router = APIRouter(
     dependencies=[Depends(get_system)]  # Apply system dependency to all routes
 )
 
+
 class CodeRequest(BaseModel):
     query: str
+
 
 # Route handler (replaces the decorated function)
 @traceroot.trace()
 async def code_endpoint(
-    request: CodeRequest,
-    system: MultiAgentSystem = Depends(get_system)
+    request: CodeRequest, system: MultiAgentSystem = Depends(get_system)
 ) -> Dict[str, str]:
     """Process code generation requests"""
     logger.info(f"Code endpoint called with query: {request.query}")
@@ -48,17 +49,12 @@ async def code_endpoint(
         return {"status": "success", "response": result}
     except Exception as e:
         logger.error(f"Error processing query: {str(e)}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Query processing failed: {str(e)}"
-        )
+        raise HTTPException(status_code=500,
+                            detail=f"Query processing failed: {str(e)}")
+
 
 # Add the single route to router
-router.add_api_route(
-    "/code",
-    code_endpoint,
-    methods=["POST"]
-)
+router.add_api_route("/code", code_endpoint, methods=["POST"])
 
 # Include the router in the main app
 app.include_router(router)
@@ -71,4 +67,4 @@ if __name__ == "__main__":
                      "OPENAI_API_KEY=your_api_key_here")
         exit(1)
 
-    uvicorn.run(app, host="0.0.0.0", port=9999) 
+    uvicorn.run(app, host="0.0.0.0", port=9999)

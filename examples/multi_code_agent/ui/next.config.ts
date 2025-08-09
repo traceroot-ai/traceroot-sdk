@@ -10,7 +10,7 @@ const nextConfig: NextConfig = {
         'winston-cloudwatch-logs': 'commonjs winston-cloudwatch-logs',
         '@aws-sdk/node-http-handler': 'commonjs @aws-sdk/node-http-handler',
         'http2': 'commonjs http2',
-        
+
         // Node.js built-ins
         'fs': 'commonjs fs',
         'path': 'commonjs path',
@@ -21,7 +21,7 @@ const nextConfig: NextConfig = {
         'crypto': 'commonjs crypto',
         'events': 'commonjs events',
         'url': 'commonjs url',
-        
+
         // Development tools that shouldn't be bundled
         'typescript': 'commonjs typescript',
         'ts-node': 'commonjs ts-node',
@@ -29,7 +29,7 @@ const nextConfig: NextConfig = {
         'vm2': 'commonjs vm2',
         'v8-compile-cache': 'commonjs v8-compile-cache',
         'v8-compile-cache-lib': 'commonjs v8-compile-cache-lib',
-        
+
         // Optional dependencies that might be dynamically loaded
         '@swc/core': 'commonjs @swc/core',
         '@swc/helpers': 'commonjs @swc/helpers',
