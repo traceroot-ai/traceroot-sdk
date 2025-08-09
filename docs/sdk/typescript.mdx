@@ -91,7 +91,7 @@ const config = {
   // Your environment configuration
   // development, staging, production
     environment: 'development',
-    
+
   // Token configuration
   token: 'traceroot-*',
 
@@ -109,6 +109,20 @@ module.exports = config;
 A real example is [here](https://github.com/traceroot-ai/traceroot-sdk/blob/main/examples/multi_code_agent/ui/traceroot.config.js).
 
 ## Usage
+
+<img
+  src="https://raw.githubusercontent.com/traceroot-ai/traceroot-sdk/refs/heads/main/misc/images/typescript/typescript.png"
+  alt="TraceRoot SDK for TypeScript Usage"
+  style={{
+    display: "block",
+    margin: "0 auto",
+    maxWidth: "800px",
+    width: "100%",
+    height: "auto"
+  }}
+/>
+
+Please use the image above and descriptions below to understand what's the effect of `traceroot.traceFunction`, function name, service name, environment, and logging.
 
 ### Tracing Functions
 Then you can use the `traceroot.traceFunction` to trace your functions. We require that you at least need to call this function to the **entry point** of your application.
