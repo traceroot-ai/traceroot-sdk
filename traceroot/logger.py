@@ -79,7 +79,8 @@ class TraceIdFilter(logging.Filter):
             # TODO: Improve this to avoid skipping user's scripts
             if (('traceroot' in filename and 'logger.py' in filename)
                     or ('traceroot' in filename and 'tracer.py' in filename)
-                    or ('traceroot' in filename and 'logging/' in filename)
+                    or ('traceroot' in filename and 'logging/' in filename) or
+                ('Lib' in filename and 'logging/' in filename)  # Windows
                     or filename.startswith('__')
                     or filename.endswith('/__init__.py')):
                 continue
