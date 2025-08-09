@@ -1,5 +1,5 @@
-token: "traceroot-********************************"
-service_name: "sdk-example-service"
+token: "traceroot-5724dd0ee3574060b7d0f3730694f44*"
+service_name: "sdk-python-example-service"
 github_owner: "traceroot-ai"
 github_repo_name: "traceroot-sdk"
 github_commit_hash: "main"

@@ -6,22 +6,21 @@ import { request } from 'undici';
 let tracerootInitialized = false;
 let tracerootLogger: any = null;
 
-async function initializeTraceroot() {
+async function initializeTraceRoot() {
   if (!tracerootInitialized) {
     try {
       // Initialize traceroot (using undici instead of fetch to avoid Next.js instrumentation)
-      await traceroot.init();
       tracerootLogger = traceroot.get_logger();
       tracerootInitialized = true;
-      console.log('🚀 Traceroot initialized successfully in API route');
+      console.log('🚀 TraceRoot initialized successfully in API route');
       if (tracerootLogger) {
-        tracerootLogger.info('🚀 Traceroot initialized successfully in API route');
+        tracerootLogger.info('🚀 TraceRoot initialized successfully in API route');
       }
     } catch (error) {
-      console.error('⚠️ Traceroot initialization failed, continuing without tracing:', error);
+      console.error('⚠️ TraceRoot initialization failed, continuing without tracing:', error);
       tracerootInitialized = false;
       tracerootLogger = null;
-      // Don't throw - continue without traceroot
+      // Don't throw - continue without TraceRoot
     }
   }
 }
@@ -139,11 +138,8 @@ function makeCodeRequest(query: string): Promise<any> {
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('🤖 API route called');
-
     // Initialize traceroot (non-blocking)
-    await initializeTraceroot();
-
+    await initializeTraceRoot();
     const body = await request.json();
     console.log('📄 Request body:', body);
 
@@ -186,7 +182,7 @@ export async function POST(request: NextRequest) {
 export async function GET() {
   try {
     // Initialize traceroot for status check
-    await initializeTraceroot();
+    await initializeTraceRoot();
 
     // Test connectivity to the code agent using undici (no Next.js instrumentation)
     const { statusCode } = await request('http://localhost:9999/code', {
@@ -203,7 +199,7 @@ export async function GET() {
     };
 
     return NextResponse.json({
-      message: 'Code Agent API Proxy with Traceroot',
+      message: 'Code Agent API Proxy with TraceRoot',
       status: 'ready',
       tracerootInitialized,
       codeAgentReachable: testResponse.ok,
@@ -211,7 +207,7 @@ export async function GET() {
     });
   } catch (error: any) {
     return NextResponse.json({
-      message: 'Code Agent API Proxy with Traceroot',
+      message: 'Code Agent API Proxy with TraceRoot',
       status: 'error',
       error: error.message,
       tracerootInitialized,

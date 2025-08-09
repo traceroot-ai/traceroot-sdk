@@ -13,9 +13,10 @@
     "next": "15.4.5",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "traceroot-sdk-ts": "0.0.1-alpha.3",
+    "traceroot-sdk-ts": "0.0.1-alpha.7",
     "undici": "^7.13.0",
-    "winston-cloudwatch-logs": "^0.1.2"
+    "ts-node": "^10.9.2",
+    "typescript": "^5"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
@@ -26,6 +27,7 @@
     "eslint": "^9",
     "eslint-config-next": "15.4.5",
     "tailwindcss": "^4",
+    "ts-node": "^10.9.2",
     "typescript": "^5"
   }
 }

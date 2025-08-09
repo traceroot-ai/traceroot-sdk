@@ -21,7 +21,7 @@ npm install
 ## Run the UI
 
 ```bash
-npm run dev
+NEXT_OTEL_DISABLED=1 npm run dev
 ```
 
 **Note:** The API routes use `undici` instead of `fetch` to avoid Next.js's automatic fetch instrumentation, which prevents localhost spans from appearing in traces. This maintains clean distributed tracing between the frontend and backend services.
