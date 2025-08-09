@@ -1,0 +1,154 @@
+# TraceRoot SDK for TypeScript
+
+A TypeScript SDK for TraceRoot tracing and logging.
+
+## Introduction
+
+This SDK allows you to trace functions and utilizes TraceRoot's own logger within the TraceRoot trace. It captures all the context designed for advanced debugging of AI agents.
+
+### OpenTelemetry
+
+The trace is built upon OpenTelemetry, and the traces will be sent to TraceRoot's own endpoint.
+
+### Winston
+
+The logger is based on Winston, designed for integration with CloudWatch. And currently the logs will be stored in AWS.
+
+## Installation
+
+```bash
+npm install traceroot-sdk-ts@latest
+```
+
+## Configuration
+
+At first you need to create a `traceroot.config.ts` file in the root of your project:
+
+```typescript
+import type { TraceRootConfigFile } from 'traceroot-sdk-ts/src/config';
+
+const config: TraceRootConfigFile = {
+  // Basic service configuration
+  service_name: 'ts-example',
+  github_owner: 'traceroot-ai',
+  github_repo_name: 'traceroot-sdk-ts',
+  github_commit_hash: 'main',
+
+  // Your environment configuration such as development, staging, production
+  environment: 'development',
+
+  // Token configuration
+  // This is the token you can generate from the TraceRoot.AI website
+  token: 'traceroot-***********************',
+
+  // Whether to enable console export of spans and logs
+  enable_span_console_export: false,
+  enable_log_console_export: true,
+
+  // Local mode that whether to store all data locally
+  local_mode: false,
+};
+export default config;
+```
+
+An example is shown in the [traceroot.config.ts](./traceroot.config.ts) file.
+
+If you don't have TypeScript node and runtime installed, you can also use JavaScript config:
+
+```javascript
+const config = {
+    // Basic service configuration
+    service_name: 'js-example',
+    github_owner: 'traceroot-ai',
+    github_repo_name: 'traceroot-sdk',
+    github_commit_hash: 'main',
+
+    // Your environment configuration
+    // development, staging, production
+    environment: 'development',
+
+    // Token configuration
+    token: 'traceroot-*',
+
+    // Whether to enable console export of spans and logs
+    enable_span_console_export: false,
+    enable_log_console_export: true,
+
+    // Local mode that whether to store all data locally
+    local_mode: false,
+  };
+
+  module.exports = config;
+```
+
+An example is shown in the [traceroot.config.js](./traceroot.config.js) file.
+
+## Usage
+
+Then you can use the `traceroot.traceFunction` to trace your functions:
+
+```typescript
+import * as traceroot from 'traceroot-sdk-ts';
+
+const logger = traceroot.get_logger();
+
+async function main() {
+  const greet = traceroot.traceFunction(
+    async function greet(name: string): Promise<string> {
+      logger.info(`Greeting inside traced function: ${name}`);
+      // Simulate some async work
+      await new Promise(resolve => setTimeout(resolve, 100));
+      return `Hello, ${name}!`;
+    },
+    { spanName: 'greet' }
+  );
+
+  const result = await greet('world');
+  logger.info(`Greeting result: ${result}`);
+}
+
+main().then(async () => {
+  await traceroot.forceFlushTracer();
+  await traceroot.shutdownTracing();
+  await traceroot.forceFlushLogger();
+  await traceroot.shutdownLogger();
+  process.exit(0);
+});
+
+```
+
+Or just use the decorator such as:
+
+```typescript
+import * as traceroot from 'traceroot-sdk-ts';
+
+const logger = traceroot.get_logger();
+
+class GreetingService {
+  // @ts-ignore - TypeScript has strict typing issues with decorators, but this works at runtime
+  @traceroot.trace({ spanName: 'greet' })
+  async greet(name: string): Promise<string> {
+    logger.info(`Greeting inside traced function: ${name}`);
+    // Simulate some async work
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    return `Hello, ${name}!`;
+  }
+}
+
+async function main() {
+  const service = new GreetingService();
+  const result = await service.greet('world');
+  logger.info(`Greeting result: ${result}`); // This will not be shown in TraceRoot UI
+}
+
+main().then(async () => {
+  await traceroot.forceFlushTracer();
+  await traceroot.shutdownTracing();
+  await traceroot.forceFlushLogger();
+  await traceroot.shutdownLogger();
+  process.exit(0);
+});
+
+```
+
+More details can be found in the [examples](./examples).
