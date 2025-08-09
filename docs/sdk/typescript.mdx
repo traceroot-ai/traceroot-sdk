@@ -12,9 +12,11 @@ The trace is built upon OpenTelemetry, and the traces will be sent to TraceRoot'
 
 ### Winston
 
-The logger is based on Winston, designed for integration with CloudWatch. And currently the logs will be stored in AWS.
+The logger is based on Winston, designed for integration with CloudWatch so currently the logs will be stored in AWS.
 
 ## Installation
+
+Please install the SDK with the latest version:
 
 ```bash
 npm install traceroot-sdk-ts@latest
@@ -23,6 +25,14 @@ npm install traceroot-sdk-ts@latest
 ## Configuration
 
 At first you need to create a `traceroot.config.ts` file in the root of your project:
+
+1. You should specify the service name, which is the name of the service you are tracing.
+2. GitHub related information is optional. If you specified, you also need to put GitHub token to the integration on the TraceRoot.AI platform.
+3. The `token` is required and you can generate one from the TraceRoot.AI platform integration page.
+4. The `enable_span_console_export` and `enable_log_console_export` are optional and you can enable them to see the spans and logs in the console. We recommend to not enable span console export as it make the terminal output too verbose.
+5. The `local_mode` is optional and you can enable it to store all data locally, which is using the Jaeger backend and SQlite for data storage. More details please checkout our open sourced [traceroot](https://github.com/traceroot-ai/traceroot) project.
+
+Here is an example of the `traceroot.config.ts` file:
 
 ```typescript
 import type { TraceRootConfigFile } from 'traceroot-sdk-ts/src/config';
@@ -51,41 +61,68 @@ const config: TraceRootConfigFile = {
 export default config;
 ```
 
-An example is shown in the [traceroot.config.ts](./traceroot.config.ts) file.
+Notice that to use the `traceroot.config.ts` file, you need to ensure you have TypeScript installed so that the SDK can correctly parse the config file. An example is shown in this [package.json](https://github.com/traceroot-ai/traceroot-sdk/blob/main/examples/multi_code_agent/ui/package.json) file:
 
-If you don't have TypeScript node and runtime installed, you can also use JavaScript config:
+```json
+"dependencies": {
+    "@aws-sdk/node-http-handler": "^3.370.0",
+    "next": "15.4.5",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "traceroot-sdk-ts": "0.0.1-alpha.7",
+    "undici": "^7.13.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5"
+},
+```
+
+A real example is [here](https://github.com/traceroot-ai/traceroot-sdk/blob/main/examples/multi_code_agent/ui/traceroot.config.ts).
+
+If you don't have TypeScript node and runtime installed, you can use the JavaScript config instead:
 
 ```javascript
 const config = {
-    // Basic service configuration
-    service_name: 'js-example',
-    github_owner: 'traceroot-ai',
-    github_repo_name: 'traceroot-sdk',
-    github_commit_hash: 'main',
+  // Basic service configuration
+  service_name: 'js-example',
+  github_owner: 'traceroot-ai',
+  github_repo_name: 'traceroot-sdk',
+  github_commit_hash: 'main',
 
-    // Your environment configuration
-    // development, staging, production
+  // Your environment configuration
+  // development, staging, production
     environment: 'development',
+    
+  // Token configuration
+  token: 'traceroot-*',
 
-    // Token configuration
-    token: 'traceroot-*',
+  // Whether to enable console export of spans and logs
+  enable_span_console_export: false,
+  enable_log_console_export: true,
 
-    // Whether to enable console export of spans and logs
-    enable_span_console_export: false,
-    enable_log_console_export: true,
+  // Local mode that whether to store all data locally
+  local_mode: false,
+};
 
-    // Local mode that whether to store all data locally
-    local_mode: false,
-  };
-
-  module.exports = config;
+module.exports = config;
 ```
 
-An example is shown in the [traceroot.config.js](./traceroot.config.js) file.
+A real example is [here](https://github.com/traceroot-ai/traceroot-sdk/blob/main/examples/multi_code_agent/ui/traceroot.config.js).
 
 ## Usage
 
-Then you can use the `traceroot.traceFunction` to trace your functions:
+### Tracing Functions
+Then you can use the `traceroot.traceFunction` to trace your functions. We require that you at least need to call this function to the **entry point** of your application.
+For example, if you have a workflow called, you can wrap around your workflow with this to allow to track tracing information.
+If you add more `traceroot.traceFunction` to the children function of the parent function, the tracing information will have a nicer tree structure, which allows better performance of the AI agents to analyze the tracing and logging information.
+
+### Function Name
+If you specify the `spanName` parameter, the span name will be used as the name of the function that will be shown in the TraceRoot.AI platform.
+
+### Logging
+Only within one a `traceroot.traceFunction`, you can use the traceroot logger to log the information, including `logger.info`, `logger.error`, `logger.warn`, `logger.debug` and `logger.critical`.
+Notice that within the `traceroot.traceFunction`, the log will be correctly tracked and you can see the log in the TraceRoot.AI platform by clicking each workflows of the tracing information.
+
+Here is an example of how to use the `traceroot.traceFunction` and the `logger`:
 
 ```typescript
 import * as traceroot from 'traceroot-sdk-ts';
@@ -114,10 +151,11 @@ main().then(async () => {
   await traceroot.shutdownLogger();
   process.exit(0);
 });
-
 ```
 
-Or just use the decorator such as:
+Notice that you need to call those flush and shutdown functions to ensure the logging and tracing data is sent to the TraceRoot.AI platform.
+
+For the `traceroot.traceFunction`, you can replace it with the decorator such as `@traceroot.trace({ spanName: 'greet' })`:
 
 ```typescript
 import * as traceroot from 'traceroot-sdk-ts';
@@ -148,7 +186,8 @@ main().then(async () => {
   await traceroot.shutdownLogger();
   process.exit(0);
 });
-
 ```
 
-More details can be found in the [examples](./examples).
+## Example
+
+A real example by using the TraceRoot SDK within Next.js api route is [here](https://github.com/traceroot-ai/traceroot-sdk/blob/main/examples/multi_code_agent/ui/src/app/api/code/route.ts).
