@@ -2,7 +2,7 @@
 
 from fastapi import FastAPI
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
-from opentelemetry.trace import Span
+from opentelemetry.trace import Span, get_current_span
 
 from traceroot.tracer import get_config, get_tracer_provider
 
@@ -40,6 +40,8 @@ def connect_fastapi(app: FastAPI) -> None:
 
     def server_request_hook(span: Span, scope: dict):
         """Hook called when server receives a request"""
+        current_span = get_current_span()
+        print(f"Server request hook called with span: {current_span}")
         if span and span.is_recording():
             # Add service metadata to the span
             span.set_attribute("service.name", config.service_name)
@@ -61,6 +63,8 @@ def connect_fastapi(app: FastAPI) -> None:
 
     def client_request_hook(span: Span, scope: dict, message: dict = None):
         """Hook called when making outbound requests"""
+        current_span = get_current_span()
+        print(f"Client request hook called with span: {current_span}")
         if span and span.is_recording():
             span.set_attribute("service.name", config.service_name)
             span.set_attribute("telemetry.sdk.language", "python")
@@ -89,6 +93,8 @@ def connect_fastapi(app: FastAPI) -> None:
         NOTE: We are not using scope here because it's the same as the
         one used in client_request_hook.
         """
+        current_span = get_current_span()
+        print(f"Client response hook called with span: {current_span}")
         if span and span.is_recording():
             span.set_attribute("service.name", config.service_name)
             span.set_attribute("telemetry.sdk.language", "python")
