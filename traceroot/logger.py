@@ -211,9 +211,10 @@ class TraceRootLogger:
         console_handler = logging.StreamHandler(sys.stdout)
         self.logger.addHandler(console_handler)
 
-    def _fetch_aws_credentials(self,
-                               force_refresh: bool = False
-                               ) -> dict[str, Any] | None:
+    def _fetch_aws_credentials(
+        self,
+        force_refresh: bool = False,
+    ) -> dict[str, Any] | None:
         """Fetch AWS credentials from the traceroot endpoint
         with caching and auto-refresh"""
         utc_now = datetime.now(timezone.utc)
