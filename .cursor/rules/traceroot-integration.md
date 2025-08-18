@@ -9,7 +9,7 @@ TraceRoot provides distributed tracing and logging for Python applications. Use 
 ### 1. Install TraceRoot
 
 ```bash
-pip install traceroot==0.0.4a9
+pip install traceroot==0.0.4a11
 ```
 
 ### 2. Get Your Token
@@ -148,7 +148,7 @@ if __name__ == "__main__":
 
 ## Quick Checklist
 
-- [ ] Install `traceroot==0.0.4a9`
+- [ ] Install `traceroot==0.0.4a11`
 - [ ] Create `.traceroot-config.yaml` with your token
 - [ ] Replace logging imports with `from traceroot.logger import get_logger`
 - [ ] Test that traces appear in TraceRoot dashboard
