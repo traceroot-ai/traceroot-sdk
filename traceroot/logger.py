@@ -5,7 +5,8 @@ import logging
 import os
 import sys
 import time
-from typing import Optional
+from datetime import datetime, timedelta, timezone
+from typing import Any
 
 import boto3
 import requests
@@ -173,10 +174,14 @@ class SpanEventHandler(logging.Handler):
 class TraceRootLogger:
     """Enhanced logger with trace correlation and AWS integration"""
 
-    def __init__(self, config: TraceRootConfig, name: Optional[str] = None):
+    def __init__(self, config: TraceRootConfig, name: str | None = None):
         self.config = config
         self.logger = logging.getLogger(name or config.service_name)
         self.logger.setLevel(logging.DEBUG)
+
+        # Credential caching with expiration
+        self._cached_credentials: dict[str, Any] | None = None
+        self._credentials_expiry: datetime | None = None
 
         # Configure logging to use UTC time
         logging.Formatter.converter = time.gmtime
@@ -206,8 +211,20 @@ class TraceRootLogger:
         console_handler = logging.StreamHandler(sys.stdout)
         self.logger.addHandler(console_handler)
 
-    def _fetch_aws_credentials(self) -> dict:
-        """Fetch AWS credentials from the traceroot endpoint"""
+    def _fetch_aws_credentials(self,
+                               force_refresh: bool = False
+                               ) -> dict[str, Any] | None:
+        """Fetch AWS credentials from the traceroot endpoint
+        with caching and auto-refresh"""
+        utc_now = datetime.now(timezone.utc)
+
+        # Check if we need to refresh credentials
+        if (not force_refresh and self._cached_credentials
+                and self._credentials_expiry):
+            # Refresh if credentials expire within 30 minutes
+            if utc_now < (self._credentials_expiry - timedelta(minutes=30)):
+                return self._cached_credentials
+
         try:
             url = "https://api.test.traceroot.ai/v1/verify/credentials"
             params = {"token": self.config.token}
@@ -217,17 +234,35 @@ class TraceRootLogger:
             response.raise_for_status()
 
             credentials = response.json()
-            return {
+
+            # Parse expiration time from credentials
+            expiration_str = credentials.get('expiration_utc')
+            if isinstance(expiration_str, str):
+                # Parse ISO format datetime string
+                expiration_dt = datetime.fromisoformat(
+                    expiration_str.replace('Z', '+00:00'))
+            else:
+                # Fallback: assume 12 hours from now if no expiration provided
+                expiration_dt = utc_now + timedelta(hours=12)
+
+            # Cache the credentials and expiration time
+            self._cached_credentials = {
                 'aws_access_key_id': credentials['aws_access_key_id'],
                 'aws_secret_access_key': credentials['aws_secret_access_key'],
                 'aws_session_token': credentials['aws_session_token'],
                 'region': credentials['region'],
                 'hash': credentials['hash'],
+                'expiration_utc': expiration_str,
                 'otlp_endpoint': credentials['otlp_endpoint'],
             }
+            self._credentials_expiry = expiration_dt
+
+            return self._cached_credentials
+
         except Exception as e:
             self.logger.error(f"Failed to fetch AWS credentials: {e}")
-            return None
+            # Return cached credentials if available, even if expired
+            return self._cached_credentials
 
     def _setup_cloudwatch_handler(self):
         r"""Setup CloudWatch logging handler"""
@@ -235,13 +270,13 @@ class TraceRootLogger:
         try:
             # Fetch AWS credentials from the endpoint
             credentials = self._fetch_aws_credentials()
-            self.config._name = credentials['hash']
-            self.config.otlp_endpoint = credentials['otlp_endpoint']
             if not credentials:
                 self.logger.error("Failed to fetch AWS credentials, "
                                   "falling back to default session")
                 session = boto3.Session(region_name=self.config.aws_region)
             else:
+                self.config._name = credentials['hash']
+                self.config.otlp_endpoint = credentials['otlp_endpoint']
                 session = boto3.Session(
                     aws_access_key_id=credentials['aws_access_key_id'],
                     aws_secret_access_key=credentials['aws_secret_access_key'],
@@ -267,6 +302,41 @@ class TraceRootLogger:
         except Exception as e:
             self.logger.error(f"Failed to setup CloudWatch logging: {e}")
 
+    def refresh_credentials(self) -> bool:
+        """Manually refresh AWS credentials and recreate
+        CloudWatch handler if needed
+
+        Returns:
+            bool: True if credentials were refreshed
+            successfully, False otherwise
+        """
+        try:
+            # Force refresh credentials
+            credentials = self._fetch_aws_credentials(force_refresh=True)
+            if not credentials:
+                return False
+
+            # If not in local mode, recreate CloudWatch handler
+            # with new credentials
+            if not self.config.local_mode:
+                # Remove existing CloudWatch handler if present
+                if _cloudwatch_handler:
+                    try:
+                        _cloudwatch_handler.flush()
+                        _cloudwatch_handler.close()
+                        self.logger.removeHandler(_cloudwatch_handler)
+                    except Exception as e:
+                        self.logger.warning(
+                            f"Error removing old CloudWatch handler: {e}")
+
+                # Setup new CloudWatch handler with refreshed credentials
+                self._setup_cloudwatch_handler()
+
+            return True
+        except Exception as e:
+            self.logger.error(f"Failed to refresh credentials: {e}")
+            return False
+
     def _setup_otlp_logging_handler(self):
         """Setup OpenTelemetry logging handler for local mode
         that adds logs as span events to the current span.
@@ -283,6 +353,21 @@ class TraceRootLogger:
         except Exception as e:
             self.logger.error(f"Failed to setup OpenTelemetry logging: {e}")
 
+    def _check_and_refresh_credentials(self):
+        """Check if credentials need refreshing and refresh if necessary"""
+        if self.config.local_mode:
+            return  # No need to refresh in local mode
+
+        try:
+            # This will automatically refresh if needed based on
+            # expiration time
+            credentials = self._fetch_aws_credentials()
+            if not credentials:
+                self.logger.warning("Unable to refresh expired "
+                                    "credentials")
+        except Exception as e:
+            self.logger.error(f"Error checking credential expiration: {e}")
+
     def _increment_span_log_count(self, attribute_name: str):
         """Increment the log count attribute for the current span"""
         try:
@@ -298,33 +383,38 @@ class TraceRootLogger:
 
     def debug(self, message: str, *args, **kwargs):
         """Log debug message"""
+        self._check_and_refresh_credentials()
         self.logger.debug(message, *args, **kwargs)
         self._increment_span_log_count("num_debug_logs")
 
     def info(self, message: str, *args, **kwargs):
         """Log info message"""
+        self._check_and_refresh_credentials()
         self.logger.info(message, *args, **kwargs)
         self._increment_span_log_count("num_info_logs")
 
     def warning(self, message: str, *args, **kwargs):
         """Log warning message"""
+        self._check_and_refresh_credentials()
         self.logger.warning(message, *args, **kwargs)
         self._increment_span_log_count("num_warning_logs")
 
     def error(self, message: str, *args, **kwargs):
         """Log error message"""
+        self._check_and_refresh_credentials()
         self.logger.error(message, *args, **kwargs)
         self._increment_span_log_count("num_error_logs")
 
     def critical(self, message: str, *args, **kwargs):
         """Log critical message"""
+        self._check_and_refresh_credentials()
         self.logger.critical(message, *args, **kwargs)
         self._increment_span_log_count("num_critical_logs")
 
 
 # Global logger instance
-_global_logger: Optional[TraceRootLogger] = None
-_cloudwatch_handler: Optional[watchtower.CloudWatchLogHandler] = None
+_global_logger: TraceRootLogger | None = None
+_cloudwatch_handler: watchtower.CloudWatchLogHandler | None = None
 
 
 def initialize_logger(config: TraceRootConfig) -> TraceRootLogger:
@@ -373,7 +463,7 @@ def shutdown_logger() -> None:
         _global_logger = None
 
 
-def get_logger(name: Optional[str] = None) -> TraceRootLogger:
+def get_logger(name: str | None = None) -> TraceRootLogger:
     """Get the global logger instance or create a new one"""
     if _global_logger is None:
         raise RuntimeError(
