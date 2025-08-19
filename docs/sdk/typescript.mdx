@@ -116,6 +116,12 @@ Sometimes it's quite hard to find the config file in the project root due to web
 export TRACEROOT_CONFIG_PATH=/path/to/your/traceroot.config.ts
 ```
 
+### Cloud and Console Export
+
+You can enable the cloud export of spans and logs by setting the `enable_span_cloud_export` and `enable_log_cloud_export` to `true`. By default, all those are set to `true`. If you set `enable_span_cloud_export` to `false`, the cloud export of spans will be disabled (it will also disable the cloud export of logs). If you set `enable_log_cloud_export` to `false`, only the cloud export of logs will be disabled.
+
+You can enable the console export of spans and logs by setting the `enable_span_console_export` and `enable_log_console_export` to `true`. Enable them will print out spans or logs in the console.
+
 ## Usage
 
 <img
