@@ -239,9 +239,12 @@ class TraceRootLogger:
             # Parse expiration time from credentials
             expiration_str = credentials.get('expiration_utc')
             if isinstance(expiration_str, str):
-                # Parse ISO format datetime string
+                # Parse ISO format datetime string and ensure timezone-aware
                 expiration_dt = datetime.fromisoformat(
                     expiration_str.replace('Z', '+00:00'))
+                # Ensure timezone-aware
+                if expiration_dt.tzinfo is None:
+                    expiration_dt = expiration_dt.replace(tzinfo=timezone.utc)
             else:
                 # Fallback: assume 12 hours from now if no expiration provided
                 expiration_dt = utc_now + timedelta(hours=12)
@@ -366,8 +369,9 @@ class TraceRootLogger:
             if not credentials:
                 self.logger.warning("Unable to refresh expired "
                                     "credentials")
-        except Exception as e:
-            self.logger.error(f"Error checking credential expiration: {e}")
+        except Exception:
+            # Silently handle credential expiration check errors
+            pass
 
     def _increment_span_log_count(self, attribute_name: str):
         """Increment the log count attribute for the current span"""
