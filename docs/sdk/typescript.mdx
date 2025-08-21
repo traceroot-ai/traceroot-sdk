@@ -221,7 +221,9 @@ main().then(async () => {
 You can also log with some metadata and make it searchable in the TraceRoot UI via:
 
 ```typescript
-logger.info({ requestId }, `Making another request`);
+logger.info({ requestId, userId }, `Making another request`);
+// or
+logger.info({ userId }, `Making another request`, { requestId });
 ```
 
 If you choose to log with metadata, you can search for it in the TraceRoot UI. Here is an example:
@@ -233,23 +235,25 @@ const logger = traceroot.get_logger();
 
 async function main() {
   const makeRequest = traceroot.traceFunction(
-    async function makeRequest(requestId: string): Promise<string> {
-      logger.info(`Making request: ${requestId}`);
-      await makeAnotherRequest(requestId);
+    async function makeRequest(requestId: string, userId: string): Promise<string> {
+      // This will store the userId as a metadata attribute in the span so you can search for it in the TraceRoot UI
+      logger.info({ userId }, `Making request: ${requestId}`);
+      logger.debug('Pure debug message');
+      await makeAnotherRequest(requestId, userId);
       // Simulate some async work
       await new Promise(resolve => setTimeout(resolve, 1000));
       return `Request ${requestId} completed`;
     },
     { spanName: 'makeRequest', traceParams: true }
   );
-  const result = await makeRequest('123');
+  const result = await makeRequest('123', 'user123');
   logger.info(`Request result: ${result}`); // This will not be shown in TraceRoot UI
 }
 
-async function makeAnotherRequest(requestId: string) {
+async function makeAnotherRequest(requestId: string, userId: string) {
   await new Promise(resolve => setTimeout(resolve, 1000));
-  // This will store the requestId as a metadata attribute in the span so you can search for it in the TraceRoot UI
-  logger.info({ requestId }, `Making another request`);
+  // This will store the requestId and userId as a metadata attribute in the span so you can search for it in the TraceRoot UI
+  logger.info({ userId, requestId }, `Making another request`);
 }
 
 main().then(async () => {
