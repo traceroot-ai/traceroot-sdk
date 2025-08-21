@@ -222,7 +222,7 @@ class TraceRootLogger:
         # Check if we need to refresh credentials
         if (not force_refresh and self._cached_credentials
                 and self._credentials_expiry):
-            # Refresh if credentials expire within 30 minutes
+            # Don't refresh if credentials not expired within 30 minutes
             if utc_now < (self._credentials_expiry - timedelta(minutes=30)):
                 return self._cached_credentials
 
