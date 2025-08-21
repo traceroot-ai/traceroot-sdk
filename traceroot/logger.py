@@ -242,7 +242,7 @@ class TraceRootLogger:
                 # Parse ISO format datetime string and ensure timezone-aware
                 expiration_dt = datetime.fromisoformat(
                     expiration_str.replace('Z', '+00:00'))
-                # Ensure timezone-aware
+                # Ensure timezone-aware, convert to UTC if not already
                 if expiration_dt.tzinfo is None:
                     expiration_dt = expiration_dt.replace(tzinfo=timezone.utc)
             else:
