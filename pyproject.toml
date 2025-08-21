@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "traceroot"
-version = "0.0.4a11"
+version = "0.0.4a12"
 description = "The SDK that revolutionizes debugging and tracing."
 readme = "README.md"
 requires-python = ">=3.10"
