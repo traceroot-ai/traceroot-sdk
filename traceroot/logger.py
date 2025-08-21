@@ -263,9 +263,9 @@ class TraceRootLogger:
 
             return self._cached_credentials
 
-        except Exception as e:
-            self.logger.error(f"Failed to fetch AWS credentials: {e}")
+        except Exception:
             # Return cached credentials if available, even if expired
+            # Silently handle credential fetch errors
             return self._cached_credentials
 
     def _setup_cloudwatch_handler(self):
@@ -275,8 +275,8 @@ class TraceRootLogger:
             # Fetch AWS credentials from the endpoint
             credentials = self._fetch_aws_credentials()
             if not credentials:
-                self.logger.error("Failed to fetch AWS credentials, "
-                                  "falling back to default session")
+                print("Failed to fetch AWS credentials, "
+                      "falling back to default session")
                 session = boto3.Session(region_name=self.config.aws_region)
             else:
                 self.config._name = credentials['hash']
@@ -304,7 +304,7 @@ class TraceRootLogger:
             # Store reference for proper shutdown
             _cloudwatch_handler = cloudwatch_handler
         except Exception as e:
-            self.logger.error(f"Failed to setup CloudWatch logging: {e}")
+            print(f"Failed to setup CloudWatch logging handler: {e}")
 
     def refresh_credentials(self) -> bool:
         """Manually refresh AWS credentials and recreate
@@ -337,8 +337,8 @@ class TraceRootLogger:
                 self._setup_cloudwatch_handler()
 
             return True
-        except Exception as e:
-            self.logger.error(f"Failed to refresh credentials: {e}")
+        except Exception:
+            # Silently handle credential refresh errors
             return False
 
     def _setup_otlp_logging_handler(self):
