@@ -410,6 +410,109 @@ class TestCredentialRefresh(unittest.TestCase):
                 abs((self.logger._credentials_expiry -
                      expected_expiry).total_seconds()), 60)
 
+    def test_datetime_comparison_offset_naive_fix(self):
+        """Test that datetime comparison works with offset-naive
+        expiration times
+        """
+        # Test case 1: expiration string without timezone info (offset-naive)
+        naive_expiration = (datetime.now(timezone.utc) +
+                            timedelta(hours=2)).strftime('%Y-%m-%dT%H:%M:%S')
+        mock_credentials = {
+            'aws_access_key_id': 'NAIVEKEY123',
+            'aws_secret_access_key': 'naive_secret',
+            'aws_session_token': 'naive_token',
+            'region': 'us-east-1',
+            'hash': 'naive-hash',
+            'expiration_utc': naive_expiration,  # No timezone info
+            'otlp_endpoint': 'https://otlp.test.com'
+        }
+
+        mock_response = Mock()
+        mock_response.json.return_value = mock_credentials
+        mock_response.raise_for_status.return_value = None
+
+        with patch('traceroot.logger.requests.get',
+                   return_value=mock_response):
+            # This should not raise the "can't compare offset-naive
+            # and offset-aware datetimes" error
+            result = self.logger._fetch_aws_credentials()
+            self.assertIsNotNone(result)
+            # Verify expiration time is timezone-aware
+            self.assertIsNotNone(self.logger._credentials_expiry.tzinfo)
+
+            # Test that subsequent calls work (uses comparison logic)
+            result2 = self.logger._fetch_aws_credentials()
+            self.assertIsNotNone(result2)
+
+    def test_datetime_comparison_mixed_timezone_scenarios(self):
+        """Test various timezone scenarios that could cause comparison errors
+        """
+        test_cases = [
+            # Case 1: ISO string with Z suffix
+            (datetime.now(timezone.utc) + timedelta(hours=2)
+             ).strftime('%Y-%m-%dT%H:%M:%SZ'),
+            # Case 2: ISO string with +00:00 offset
+            (datetime.now(timezone.utc) + timedelta(hours=2)
+             ).strftime('%Y-%m-%dT%H:%M:%S+00:00'),
+            # Case 3: ISO string without timezone (offset-naive)
+            (datetime.now(timezone.utc) + timedelta(hours=2)
+             ).strftime('%Y-%m-%dT%H:%M:%S'),
+        ]
+
+        for i, expiration_str in enumerate(test_cases):
+            with self.subTest(case=i + 1, expiration=expiration_str):
+                mock_credentials = {
+                    'aws_access_key_id': f'TESTKEY{i}',
+                    'aws_secret_access_key': f'test_secret{i}',
+                    'aws_session_token': f'test_token{i}',
+                    'region': 'us-east-1',
+                    'hash': f'test-hash{i}',
+                    'expiration_utc': expiration_str,
+                    'otlp_endpoint': 'https://otlp.test.com'
+                }
+
+                mock_response = Mock()
+                mock_response.json.return_value = mock_credentials
+                mock_response.raise_for_status.return_value = None
+
+                with patch('traceroot.logger.requests.get',
+                           return_value=mock_response):
+                    # Clear previous cached credentials
+                    self.logger._cached_credentials = None
+                    self.logger._credentials_expiry = None
+
+                    # This should not raise datetime comparison errors
+                    result = self.logger._fetch_aws_credentials()
+                    self.assertIsNotNone(result)
+                    self.assertIsNotNone(self.logger._credentials_expiry)
+                    # Verify all expiration times are timezone-aware
+                    self.assertIsNotNone(
+                        self.logger._credentials_expiry.tzinfo)
+
+    def test_silent_exception_handling_in_credential_check(self):
+        """Test that _check_and_refresh_credentials silently handles exceptions
+        """
+        with patch.object(self.logger, '_fetch_aws_credentials') as mock_fetch:
+            # Mock _fetch_aws_credentials to raise an exception
+            mock_fetch.side_effect = Exception(
+                "Simulated credential fetch error")
+
+            # Capture any logs that might be emitted
+            with patch.object(self.logger.logger, 'error') as mock_error:
+
+                # This should not raise an exception and should not log errors
+                self.logger._check_and_refresh_credentials()
+
+                # Verify no error logs were emitted for the exception
+                mock_error.assert_not_called()
+                # Warning might still be called for other reasons,
+                # but not for the exception
+                # Check that no error about "Error checking credential
+                # expiration" was logged
+                for call in mock_error.call_args_list:
+                    self.assertNotIn("Error checking credential expiration",
+                                     str(call))
+
 
 if __name__ == '__main__':
     unittest.main()
