@@ -275,8 +275,6 @@ class TraceRootLogger:
             # Fetch AWS credentials from the endpoint
             credentials = self._fetch_aws_credentials()
             if not credentials:
-                print("Failed to fetch AWS credentials, "
-                      "falling back to default session")
                 session = boto3.Session(region_name=self.config.aws_region)
             else:
                 self.config._name = credentials['hash']
@@ -305,8 +303,9 @@ class TraceRootLogger:
 
                 # Store reference for proper shutdown
                 _cloudwatch_handler = cloudwatch_handler
-        except Exception as e:
-            print(f"Failed to setup CloudWatch logging handler: {e}")
+        except Exception:
+            # Silently handle credential fetch errors
+            pass
 
     def refresh_credentials(self) -> bool:
         """Manually refresh AWS credentials and recreate
@@ -366,7 +365,7 @@ class TraceRootLogger:
         except Exception as e:
             self.logger.error(f"Failed to setup OpenTelemetry logging: {e}")
 
-    def _check_and_refresh_credentials(self):
+    def _check_and_refresh_credentials(self) -> None:
         """Check if credentials need refreshing and refresh if necessary"""
         if self.config.local_mode or not self.config.enable_span_cloud_export:
             # No need to refresh in local mode or
@@ -376,10 +375,7 @@ class TraceRootLogger:
         try:
             # This will automatically refresh if needed based on
             # expiration time
-            credentials = self._fetch_aws_credentials()
-            if not credentials:
-                self.logger.warning("Unable to refresh expired "
-                                    "credentials")
+            _ = self._fetch_aws_credentials()
         except Exception:
             # Silently handle credential expiration check errors
             pass

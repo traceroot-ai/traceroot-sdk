@@ -21,6 +21,7 @@ from opentelemetry.sdk.trace.export import (BatchSpanProcessor,
 from opentelemetry.trace import get_current_span
 from opentelemetry.trace.propagation.tracecontext import \
     TraceContextTextMapPropagator
+from opentelemetry.util._once import Once
 
 from traceroot.config import TraceRootConfig
 from traceroot.logger import initialize_logger, shutdown_logger
@@ -53,7 +54,7 @@ class TraceOptions:
         return f'{fn.__module__}.{fn.__qualname__}'
 
 
-def _initialize_tracing(**kwargs: Any) -> TracerProvider:
+def init(**kwargs: Any) -> TracerProvider:
     r"""Initialize TraceRoot tracing and logging.
 
     This is the main entry point for setting up tracing and logging.
@@ -69,9 +70,25 @@ def _initialize_tracing(**kwargs: Any) -> TracerProvider:
     """
     global _tracer_provider, _config
 
-    # Check if already initialized
-    if _tracer_provider is not None:
+    # Check if already initialized and no kwargs provided
+    if _tracer_provider is not None and len(kwargs) == 0:
         return _tracer_provider
+
+    # If kwargs are provided and we're already initialized,
+    # reset everything properly
+    if _tracer_provider is not None and len(kwargs) > 0:
+        # Shutdown the old tracer provider
+        _tracer_provider.shutdown()
+        _tracer_provider = None
+        _config = None
+
+        # Reset OpenTelemetry's global state to avoid override warning
+        otel_trace._TRACER_PROVIDER = None
+        otel_trace._TRACER_PROVIDER_SET_ONCE = Once()
+
+        # Also shutdown the logger so it gets reinitialized
+        # with new config (including token)
+        shutdown_logger()
 
     # Load configuration from YAML file first
     yaml_config = find_traceroot_config()
@@ -143,11 +160,15 @@ def shutdown_tracing() -> None:
     This should be called when your application is shutting down
     to ensure all traces are properly exported.
     """
-    global _tracer_provider
+    global _tracer_provider, _config
 
     if _tracer_provider is not None:
         _tracer_provider.shutdown()
         _tracer_provider = None
+        _config = None
+
+    # Reset OpenTelemetry's global tracer provider to allow reinitialization
+    otel_trace.set_tracer_provider(otel_trace.NoOpTracerProvider())
 
 
 def shutdown() -> None:
@@ -203,7 +224,7 @@ def _trace(function: Callable, options: TraceOptions, *args: Any,
     with _span as span:
         # Set AWS X-Ray annotations as individual attributes
         # Avoid setting hash in local mode
-        if not _config.local_mode:
+        if not _config.local_mode and _config._name is not None:
             span.set_attribute("hash", _config._name)
         span.set_attribute("service_name", _config.service_name)
         span.set_attribute("service_environment", _config.environment)

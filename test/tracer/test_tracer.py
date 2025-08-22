@@ -5,7 +5,7 @@ from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import (BatchSpanProcessor,
                                             SimpleSpanProcessor)
 
-from traceroot.tracer import _initialize_tracing
+from traceroot.tracer import init
 
 
 class TestTracer(unittest.TestCase):
@@ -65,14 +65,13 @@ class TestTracer(unittest.TestCase):
         mock_fetch_credentials.return_value = None
         mock_boto_session.return_value = MagicMock()
 
-        provider = _initialize_tracing(
-            service_name="test-service",
-            github_owner="test-owner",
-            github_repo_name="test-repo",
-            github_commit_hash="test-hash",
-            enable_span_console_export=True,
-            enable_span_cloud_export=True,
-            otlp_endpoint="http://test-endpoint:4318/v1/traces")
+        provider = init(service_name="test-service",
+                        github_owner="test-owner",
+                        github_repo_name="test-repo",
+                        github_commit_hash="test-hash",
+                        enable_span_console_export=True,
+                        enable_span_cloud_export=True,
+                        otlp_endpoint="http://test-endpoint:4318/v1/traces")
 
         # Verify that a TracerProvider was created
         self.assertIsInstance(provider, TracerProvider)
@@ -92,14 +91,13 @@ class TestTracer(unittest.TestCase):
 
     def test_both_console_and_cloud_span_disabled(self):
         """Test that no span processors are added when both are disabled"""
-        provider = _initialize_tracing(
-            service_name="test-service",
-            github_owner="test-owner",
-            github_repo_name="test-repo",
-            github_commit_hash="test-hash",
-            enable_span_console_export=False,
-            enable_span_cloud_export=False,
-            otlp_endpoint="http://test-endpoint:4318/v1/traces")
+        provider = init(service_name="test-service",
+                        github_owner="test-owner",
+                        github_repo_name="test-repo",
+                        github_commit_hash="test-hash",
+                        enable_span_console_export=False,
+                        enable_span_cloud_export=False,
+                        otlp_endpoint="http://test-endpoint:4318/v1/traces")
 
         # Verify that a TracerProvider was created
         self.assertIsInstance(provider, TracerProvider)
@@ -112,14 +110,13 @@ class TestTracer(unittest.TestCase):
         """Test that only console span processor is
         added when only console is enabled
         """
-        provider = _initialize_tracing(
-            service_name="test-service",
-            github_owner="test-owner",
-            github_repo_name="test-repo",
-            github_commit_hash="test-hash",
-            enable_span_console_export=True,
-            enable_span_cloud_export=False,
-            otlp_endpoint="http://test-endpoint:4318/v1/traces")
+        provider = init(service_name="test-service",
+                        github_owner="test-owner",
+                        github_repo_name="test-repo",
+                        github_commit_hash="test-hash",
+                        enable_span_console_export=True,
+                        enable_span_cloud_export=False,
+                        otlp_endpoint="http://test-endpoint:4318/v1/traces")
 
         # Verify that a TracerProvider was created
         self.assertIsInstance(provider, TracerProvider)
@@ -147,14 +144,13 @@ class TestTracer(unittest.TestCase):
         mock_fetch_credentials.return_value = None
         mock_boto_session.return_value = MagicMock()
 
-        provider = _initialize_tracing(
-            service_name="test-service",
-            github_owner="test-owner",
-            github_repo_name="test-repo",
-            github_commit_hash="test-hash",
-            enable_span_console_export=False,
-            enable_span_cloud_export=True,
-            otlp_endpoint="http://test-endpoint:4318/v1/traces")
+        provider = init(service_name="test-service",
+                        github_owner="test-owner",
+                        github_repo_name="test-repo",
+                        github_commit_hash="test-hash",
+                        enable_span_console_export=False,
+                        enable_span_cloud_export=True,
+                        otlp_endpoint="http://test-endpoint:4318/v1/traces")
 
         # Verify that a TracerProvider was created
         self.assertIsInstance(provider, TracerProvider)
