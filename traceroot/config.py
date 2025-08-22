@@ -29,9 +29,13 @@ class TraceRootConfig:
     # Environment
     environment: str = "development"
 
-    # Tracing options
+    # Whether to enable console export of spans and logs
     enable_span_console_export: bool = False
-    enable_log_console_export: bool = False
+    enable_log_console_export: bool = True
+
+    # Whether to enable cloud export of spans and logs
+    enable_span_cloud_export: bool = True
+    enable_log_cloud_export: bool = True
 
     # Local mode
     local_mode: bool = False

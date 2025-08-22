@@ -71,6 +71,8 @@ github_commit_hash: "main"
 - `github_owner` is the owner of the GitHub repository.
 - `github_repo_name` is the name of the GitHub repository.
 - `github_commit_hash` is the commit hash of the GitHub repository.
+- You can disable the cloud export of spans and logs by setting the `enable_span_cloud_export` and `enable_log_cloud_export` to `false`. Notice that if you disable the cloud export of spans, the cloud export of logs will also be disabled.
+- You can also choose to whether export the spans and logs to the console by setting the `enable_span_console_export` and `enable_log_console_export` to `true` or `false`.
 
 The GitHub information is optional. If you do not provide them, the TraceRoot SDK will not be able to provide you with the GitHub information in the logs.
 

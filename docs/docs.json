@@ -23,6 +23,7 @@
           {
             "group": "SDK",
             "pages": [
+              "sdk/python",
               "sdk/typescript"
             ]
           },
