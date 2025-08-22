@@ -112,9 +112,11 @@ def _initialize_tracing(**kwargs: Any) -> TracerProvider:
         console_processor = SimpleSpanProcessor(ConsoleSpanExporter())
         provider.add_span_processor(console_processor)
 
-    exporter = OTLPSpanExporter(endpoint=config.otlp_endpoint)
-    batch_processor = BatchSpanProcessor(exporter)
-    provider.add_span_processor(batch_processor)
+    # Only add cloud export if enabled
+    if config.enable_span_cloud_export:
+        exporter = OTLPSpanExporter(endpoint=config.otlp_endpoint)
+        batch_processor = BatchSpanProcessor(exporter)
+        provider.add_span_processor(batch_processor)
 
     # Set as global tracer provider
     otel_trace.set_tracer_provider(provider)

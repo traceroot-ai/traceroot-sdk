@@ -201,7 +201,7 @@ class TraceRootLogger:
         # Setup handlers
         if self.config.enable_log_console_export:
             self._setup_console_handler()
-        if not self.config.local_mode:
+        if not self.config.local_mode and self.config.enable_span_cloud_export:
             self._setup_cloudwatch_handler()
         else:
             self._setup_otlp_logging_handler()
@@ -287,22 +287,24 @@ class TraceRootLogger:
                     aws_session_token=credentials['aws_session_token'],
                     region_name=credentials['region'])
 
-            cloudwatch_handler = watchtower.CloudWatchLogHandler(
-                log_group=self.config._name,
-                stream_name=self.config._sub_name,
-                boto3_client=session.client('logs'),
-                # Disable queues to prevent background thread issues
-                send_interval=0.05,
-                max_batch_size=1,
-                max_batch_count=1,
-                create_log_group=True,
-                use_queues=False)
-            cloudwatch_handler.setFormatter(self.formatter)
-            cloudwatch_handler.addFilter(self.trace_filter)
-            self.logger.addHandler(cloudwatch_handler)
+            # Only create CloudWatch handler if log cloud export is enabled
+            if self.config.enable_log_cloud_export:
+                cloudwatch_handler = watchtower.CloudWatchLogHandler(
+                    log_group=self.config._name,
+                    stream_name=self.config._sub_name,
+                    boto3_client=session.client('logs'),
+                    # Disable queues to prevent background thread issues
+                    send_interval=0.05,
+                    max_batch_size=1,
+                    max_batch_count=1,
+                    create_log_group=True,
+                    use_queues=False)
+                cloudwatch_handler.setFormatter(self.formatter)
+                cloudwatch_handler.addFilter(self.trace_filter)
+                self.logger.addHandler(cloudwatch_handler)
 
-            # Store reference for proper shutdown
-            _cloudwatch_handler = cloudwatch_handler
+                # Store reference for proper shutdown
+                _cloudwatch_handler = cloudwatch_handler
         except Exception as e:
             print(f"Failed to setup CloudWatch logging handler: {e}")
 
@@ -314,17 +316,24 @@ class TraceRootLogger:
             bool: True if credentials were refreshed
             successfully, False otherwise
         """
+        if self.config.local_mode or not self.config.enable_span_cloud_export:
+            # No credentials needed in local mode or
+            # when span cloud export is disabled
+            return False
+
         try:
             # Force refresh credentials
             credentials = self._fetch_aws_credentials(force_refresh=True)
             if not credentials:
                 return False
 
-            # If not in local mode, recreate CloudWatch handler
-            # with new credentials
-            if not self.config.local_mode:
+            # If not in local mode and span cloud export is enabled,
+            # recreate CloudWatch handler with new credentials if it exists
+            if (not self.config.local_mode
+                    and self.config.enable_span_cloud_export):
                 # Remove existing CloudWatch handler if present
-                if _cloudwatch_handler:
+                # (only exists if log export is enabled)
+                if _cloudwatch_handler and self.config.enable_log_cloud_export:
                     try:
                         _cloudwatch_handler.flush()
                         _cloudwatch_handler.close()
@@ -359,8 +368,10 @@ class TraceRootLogger:
 
     def _check_and_refresh_credentials(self):
         """Check if credentials need refreshing and refresh if necessary"""
-        if self.config.local_mode:
-            return  # No need to refresh in local mode
+        if self.config.local_mode or not self.config.enable_span_cloud_export:
+            # No need to refresh in local mode or
+            # when span cloud export is disabled
+            return
 
         try:
             # This will automatically refresh if needed based on
