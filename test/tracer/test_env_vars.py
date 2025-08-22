@@ -24,9 +24,10 @@ class TestEnvironmentVariables(unittest.TestCase):
     def _cleanup_env_vars(self):
         """Remove test environment variables"""
         env_vars = [
-            'TRACEROOT_TOKEN', 'TRACEROOT_SERVICE_NAME', 'TRACEROOT_ENVIRONMENT',
-            'TRACEROOT_LOCAL_MODE', 'TRACEROOT_ENABLE_SPAN_CONSOLE_EXPORT',
-            'TRACEROOT_AWS_REGION', 'TRACEROOT_ENABLE_LOG_CONSOLE_EXPORT'
+            'TRACEROOT_TOKEN', 'TRACEROOT_SERVICE_NAME',
+            'TRACEROOT_ENVIRONMENT', 'TRACEROOT_LOCAL_MODE',
+            'TRACEROOT_ENABLE_SPAN_CONSOLE_EXPORT', 'TRACEROOT_AWS_REGION',
+            'TRACEROOT_ENABLE_LOG_CONSOLE_EXPORT'
         ]
         for var in env_vars:
             if var in os.environ:
@@ -44,8 +45,10 @@ class TestEnvironmentVariables(unittest.TestCase):
 
         self.assertEqual(env_config['token'], 'test-token')
         self.assertEqual(env_config['aws_region'], 'us-east-1')
-        self.assertTrue(env_config['local_mode'])  # Should be converted to boolean
-        self.assertFalse(env_config['enable_span_console_export'])  # Should be converted to boolean
+        self.assertTrue(
+            env_config['local_mode'])  # Should be converted to boolean
+        self.assertFalse(env_config['enable_span_console_export']
+                         )  # Should be converted to boolean
 
     def test_boolean_env_var_parsing(self):
         """Test that boolean environment variables are parsed correctly"""
@@ -104,7 +107,7 @@ class TestEnvironmentVariables(unittest.TestCase):
         self.assertEqual(config.environment, 'env-environment')
         self.assertTrue(config.local_mode)
         self.assertFalse(config.enable_span_console_export)
-        
+
         # Verify non-env values from kwargs still work
         self.assertEqual(config.github_owner, 'test-owner')
         self.assertEqual(config.github_repo_name, 'test-repo')
@@ -116,22 +119,20 @@ class TestEnvironmentVariables(unittest.TestCase):
         os.environ['TRACEROOT_TOKEN'] = 'env-token'
         os.environ['TRACEROOT_LOCAL_MODE'] = 'true'
 
-        tracer.init(
-            service_name='kwarg-service',
-            github_owner='test-owner',
-            github_repo_name='test-repo', 
-            github_commit_hash='abc123',
-            token='kwarg-token',
-            environment='kwarg-environment',
-            local_mode=False
-        )
+        tracer.init(service_name='kwarg-service',
+                    github_owner='test-owner',
+                    github_repo_name='test-repo',
+                    github_commit_hash='abc123',
+                    token='kwarg-token',
+                    environment='kwarg-environment',
+                    local_mode=False)
 
         config = tracer.get_config()
 
         # Verify env vars overrode specific values
         self.assertEqual(config.token, 'env-token')
         self.assertTrue(config.local_mode)
-        
+
         # Verify non-env values from kwargs remain
         self.assertEqual(config.service_name, 'kwarg-service')
         self.assertEqual(config.environment, 'kwarg-environment')

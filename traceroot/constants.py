@@ -4,7 +4,7 @@
 # Pattern: TRACEROOT_[CAPITALIZED_CONFIG_FIELD_NAME] -> config_field_name
 ENV_VAR_MAPPING = {
     "TRACEROOT_SERVICE_NAME": "service_name",
-    "TRACEROOT_GITHUB_OWNER": "github_owner", 
+    "TRACEROOT_GITHUB_OWNER": "github_owner",
     "TRACEROOT_GITHUB_REPO_NAME": "github_repo_name",
     "TRACEROOT_GITHUB_COMMIT_HASH": "github_commit_hash",
     "TRACEROOT_TOKEN": "token",
