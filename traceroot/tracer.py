@@ -1,5 +1,6 @@
 import inspect
 import json
+import os
 from contextlib import contextmanager
 from dataclasses import dataclass
 from functools import wraps
@@ -24,6 +25,7 @@ from opentelemetry.trace.propagation.tracecontext import \
 from opentelemetry.util._once import Once
 
 from traceroot.config import TraceRootConfig
+from traceroot.constants import ENV_VAR_MAPPING
 from traceroot.logger import initialize_logger, shutdown_logger
 from traceroot.utils.config import find_traceroot_config
 
@@ -52,6 +54,31 @@ class TraceOptions:
         if self.span_name_suffix is not None:
             return f'{fn.__module__}.{fn.__qualname__}{self.span_name_suffix}'
         return f'{fn.__module__}.{fn.__qualname__}'
+
+
+def _load_env_config() -> dict[str, Any]:
+    """Load configuration from environment variables.
+
+    Returns:
+        Dictionary with config values from environment variables
+    """
+    env_config = {}
+
+    for env_var, config_field in ENV_VAR_MAPPING.items():
+        value = os.getenv(env_var)
+        if value is not None:
+            # Handle boolean values
+            if config_field in [
+                    "enable_span_console_export", "enable_log_console_export",
+                    "enable_span_cloud_export", "enable_log_cloud_export",
+                    "local_mode"
+            ]:
+                env_config[config_field] = value.lower() in ('true', '1',
+                                                             'yes', 'on')
+            else:
+                env_config[config_field] = value
+
+    return env_config
 
 
 def init(**kwargs: Any) -> TracerProvider:
@@ -93,11 +120,15 @@ def init(**kwargs: Any) -> TracerProvider:
     # Load configuration from YAML file first
     yaml_config = find_traceroot_config()
 
-    # Merge YAML config with kwargs (kwargs take precedence)
+    # Load environment variables (highest priority)
+    env_config = _load_env_config()
+
+    # Merge configs with priority: env_vars > kwargs > yaml_config
+    config_params = {}
     if yaml_config:
-        config_params = {**yaml_config, **kwargs}
-    else:
-        config_params = kwargs
+        config_params.update(yaml_config)
+    config_params.update(kwargs)
+    config_params.update(env_config)  # env vars have highest priority
 
     if len(config_params) == 0:
         return

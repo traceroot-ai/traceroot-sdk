@@ -76,6 +76,24 @@ github_commit_hash: "main"
 
 The GitHub information is optional. If you do not provide them, the TraceRoot SDK will not be able to provide you with the GitHub information in the logs.
 
+You can also provide the configuration in the environment variables. The environment variables are the same as the configuration parameters, but with the prefix `TRACEROOT_`. For example, you can set the `TRACEROOT_TOKEN` environment variable to the `token` for the TraceRoot API.
+
+You can run following example to see how to use the environment variables:
+
+```bash
+TRACEROOT_TOKEN=traceroot-* TRACEROOT_SERVICE_NAME=new_name TRACEROOT_ENABLE_LOG_CLOUD_EXPORT=1 python3 examples/override_example.py
+```
+
+### Priority of the Configuration
+
+The priority of the configuration is as follows:
+
+1. Environment variables
+1. `traceroot.init(...)` parameters
+1. `.traceroot-config.yaml` file
+
+For example, if you provide the configuration in the environment variables, the configuration in the `.traceroot-config.yaml` file will be overridden.
+
 ## Local Mode
 
 Local mode is to use TraceRoot's local database to store the logs and traces.
