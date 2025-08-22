@@ -1,7 +1,7 @@
 from traceroot.logger import get_logger
 from traceroot.tracer import init, shutdown, trace
 
-__version__ = '0.0.4a12'
+__version__ = '0.0.4'
 
 init()
 
