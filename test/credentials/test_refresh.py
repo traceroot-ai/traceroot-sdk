@@ -255,40 +255,20 @@ class TestCredentialRefresh(unittest.TestCase):
             self.assertFalse(result)
 
     def test_refresh_credentials_local_mode_skip(self):
-        """Test that refresh_credentials skips CloudWatch
-        handler setup in local mode
+        """Test that refresh_credentials returns False and
+        skips all operations in local mode
         """
         self.logger.config.local_mode = True
 
-        mock_credentials = {
-            'aws_access_key_id':
-            'LOCALKEY123',
-            'aws_secret_access_key':
-            'local_secret',
-            'aws_session_token':
-            'local_token',
-            'region':
-            'us-east-1',
-            'hash':
-            'local-hash',
-            'expiration_utc':
-            (datetime.now(timezone.utc) +
-             timedelta(hours=12)).strftime('%Y-%m-%dT%H:%M:%SZ'),
-            'otlp_endpoint':
-            'https://otlp.test.com'
-        }
-
-        mock_response = Mock()
-        mock_response.json.return_value = mock_credentials
-        mock_response.raise_for_status.return_value = None
-
-        with patch('traceroot.logger.requests.get',
-                   return_value=mock_response), \
+        with patch('traceroot.logger.requests.get') as mock_get, \
              patch.object(self.logger,
                           '_setup_cloudwatch_handler') as mock_setup:
 
             result = self.logger.refresh_credentials()
-            self.assertTrue(result)
+            # Should return False in local mode (no credentials needed)
+            self.assertFalse(result)
+            # Should NOT make any network requests
+            mock_get.assert_not_called()
             # Should NOT recreate CloudWatch handler in local mode
             mock_setup.assert_not_called()
 
