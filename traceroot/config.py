@@ -2,6 +2,8 @@
 
 from dataclasses import dataclass
 
+from traceroot.constants import DEFAULT_VERIFICATION_ENDPOINT
+
 
 @dataclass
 class TraceRootConfig:
@@ -39,6 +41,9 @@ class TraceRootConfig:
 
     # Local mode
     local_mode: bool = False
+
+    # Verification endpoint
+    verification_endpoint: str = DEFAULT_VERIFICATION_ENDPOINT
 
     def __post_init__(self):
         self._name = self.name

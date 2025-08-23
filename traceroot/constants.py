@@ -1,5 +1,7 @@
 """Constants and configuration mappings for TraceRoot"""
 
+DEFAULT_VERIFICATION_ENDPOINT = "https://api.test.traceroot.ai/v1/verify/credentials"  # noqa: E501
+
 # Environment variable to config field mapping
 # Pattern: TRACEROOT_[CAPITALIZED_CONFIG_FIELD_NAME] -> config_field_name
 ENV_VAR_MAPPING = {
@@ -17,4 +19,5 @@ ENV_VAR_MAPPING = {
     "TRACEROOT_ENABLE_SPAN_CLOUD_EXPORT": "enable_span_cloud_export",
     "TRACEROOT_ENABLE_LOG_CLOUD_EXPORT": "enable_log_cloud_export",
     "TRACEROOT_LOCAL_MODE": "local_mode",
+    "TRACEROOT_VERIFICATION_ENDPOINT": "verification_endpoint",
 }
