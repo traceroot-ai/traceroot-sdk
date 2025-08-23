@@ -1,10 +1,10 @@
 from datetime import datetime
-from html_layout import create_layout
 
 import dash
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+from html_layout import create_layout
 
 import traceroot
 
