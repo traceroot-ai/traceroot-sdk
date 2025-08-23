@@ -20,6 +20,7 @@ This will start a Dash server on port 8050.
 ## View the Dashboard
 
 Open your browser and navigate to:
+
 ```
 http://localhost:8050
 ```
@@ -36,6 +37,7 @@ The AI Agent Performance Dashboard includes:
 - **Real-time Metrics**: Live updating cards showing key performance indicators
 
 The dashboard uses synthetic data simulating:
+
 - 5 different LLM models (GPT-4, Claude-3, Gemini-Pro, LLaMA-2, GPT-3.5)
 - 5 task types (Code Generation, Text Analysis, Translation, Summarization, Q&A)
 - 30 days of historical performance data
