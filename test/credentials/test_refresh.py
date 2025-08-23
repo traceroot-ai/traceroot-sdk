@@ -238,12 +238,13 @@ class TestCredentialRefresh(unittest.TestCase):
         with patch('traceroot.logger.requests.get',
                    return_value=mock_response), \
              patch.object(self.logger,
-                          '_setup_cloudwatch_handler') as mock_setup:
+                          '_create_cloudwatch_handler') as mock_create:
 
-            result = self.logger.refresh_credentials()
-            self.assertTrue(result)
+            self.logger.refresh_credentials()
+            # Check that credentials were refreshed successfully
+            self.assertIsNotNone(self.logger._cached_credentials)
             # Should recreate CloudWatch handler in non-local mode
-            mock_setup.assert_called_once()
+            mock_create.assert_called_once()
 
     def test_refresh_credentials_failure(self):
         """Test failed manual credential refresh"""
