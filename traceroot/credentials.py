@@ -67,7 +67,8 @@ class CredentialManager:
             headers = {"Content-Type": "application/json"}
 
             response = requests.get(url, params=params, headers=headers)
-            response.raise_for_status()
+            if not response.ok:
+                return
 
             credentials = response.json()
 
