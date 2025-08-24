@@ -47,9 +47,10 @@ def main():
 
 
 if __name__ == "__main__":
-    logger.info("Starting loop example - main function will run every 60 seconds")
+    logger.info(
+        "Starting loop example - main function will run every 60 seconds")
     logger.info("Press Ctrl+C to stop the loop")
-    
+
     try:
         while True:
             main()
