@@ -2,6 +2,7 @@ import unittest
 from unittest.mock import MagicMock, patch
 
 from traceroot.config import TraceRootConfig
+from traceroot.credentials import CredentialManager
 from traceroot.logger import TraceRootLogger
 
 
@@ -72,8 +73,8 @@ class TestLogger(unittest.TestCase):
                                  enable_log_cloud_export=True,
                                  local_mode=False)
 
-        with patch.object(TraceRootLogger,
-                          '_fetch_aws_credentials',
+        with patch.object(CredentialManager,
+                          'get_credentials',
                           return_value=None):
             logger = TraceRootLogger(config)
 
@@ -127,14 +128,14 @@ class TestLogger(unittest.TestCase):
                                  enable_log_cloud_export=False,
                                  local_mode=False)
 
-        with patch.object(TraceRootLogger,
-                          '_fetch_aws_credentials',
-                          return_value=None) as mock_fetch:
+        with patch.object(CredentialManager,
+                          'get_credentials',
+                          return_value=None) as mock_get_creds:
             logger = TraceRootLogger(config)
 
         # Credentials should be fetched (needed for tracer endpoint)
-        # Note: May be called twice - once in setup, once in create_handler
-        self.assertGreaterEqual(mock_fetch.call_count, 1)
+        # Note: May be called once during setup
+        self.assertGreaterEqual(mock_get_creds.call_count, 1)
 
         # CloudWatch handler should NOT be created (log export disabled)
         mock_cloudwatch_handler.assert_not_called()
@@ -159,14 +160,14 @@ class TestLogger(unittest.TestCase):
             enable_log_cloud_export=True,  # This should be ignored
             local_mode=False)
 
-        with patch.object(TraceRootLogger,
-                          '_fetch_aws_credentials') as mock_fetch:
+        with patch.object(CredentialManager,
+                          'get_credentials') as mock_get_creds:
             with patch.object(TraceRootLogger,
                               '_setup_otlp_logging_handler') as mock_otlp:
                 logger = TraceRootLogger(config)
 
         # No credentials should be fetched when span cloud export is disabled
-        mock_fetch.assert_not_called()
+        mock_get_creds.assert_not_called()
 
         # Should setup OTLP handler instead
         mock_otlp.assert_called_once()
@@ -190,14 +191,14 @@ class TestLogger(unittest.TestCase):
             local_mode=True  # This should override cloud settings
         )
 
-        with patch.object(TraceRootLogger,
-                          '_fetch_aws_credentials') as mock_fetch:
+        with patch.object(CredentialManager,
+                          'get_credentials') as mock_get_creds:
             with patch.object(TraceRootLogger,
                               '_setup_otlp_logging_handler') as mock_otlp:
                 TraceRootLogger(config)
 
         # No credentials should be fetched in local mode
-        mock_fetch.assert_not_called()
+        mock_get_creds.assert_not_called()
 
         # Should setup OTLP handler in local mode
         mock_otlp.assert_called_once()
@@ -225,25 +226,26 @@ class TestLogger(unittest.TestCase):
                                  enable_log_cloud_export=True,
                                  local_mode=False)
 
-        with patch.object(TraceRootLogger,
-                          '_fetch_aws_credentials',
-                          return_value=mock_credentials) as mock_fetch:
+        with patch.object(CredentialManager,
+                          'get_credentials',
+                          return_value=mock_credentials) as mock_get_creds:
             logger = TraceRootLogger(config)
-            initial_call_count = mock_fetch.call_count
+            initial_call_count = mock_get_creds.call_count
 
             # Test that credential refresh works when span
             # cloud export is enabled
-            logger.refresh_credentials()
-            # Should have made at least one additional call for refresh
-            self.assertGreater(mock_fetch.call_count, initial_call_count)
+            result = logger.refresh_credentials()
+            # Should return True and have made at
+            # least one additional call for refresh
+            self.assertTrue(result)
+            self.assertGreater(mock_get_creds.call_count, initial_call_count)
 
             # Test that credential refresh is disabled when
             # span cloud export is disabled
             logger.config.enable_span_cloud_export = False
-            previous_call_count = mock_fetch.call_count
-            logger.refresh_credentials()
-            # Should not make additional calls when disabled
-            self.assertEqual(mock_fetch.call_count, previous_call_count)
+            result = logger.refresh_credentials()
+            # Should return False when disabled
+            self.assertFalse(result)
 
     def test_check_and_refresh_credentials_logic(self):
         """Test _check_and_refresh_credentials behavior
@@ -257,22 +259,22 @@ class TestLogger(unittest.TestCase):
                                  enable_log_cloud_export=True,
                                  local_mode=False)
 
-        with patch.object(TraceRootLogger,
-                          '_fetch_aws_credentials',
-                          return_value=None) as mock_fetch:
+        with patch.object(CredentialManager,
+                          'check_and_refresh_if_needed',
+                          return_value=False) as mock_check:
             with patch.object(TraceRootLogger, '_setup_cloudwatch_handler'):
                 logger = TraceRootLogger(config)
-                mock_fetch.reset_mock()
+                mock_check.reset_mock()
 
-                # Should call fetch when span cloud export is enabled
+                # Should call check when span cloud export is enabled
                 logger._check_and_refresh_credentials()
-                mock_fetch.assert_called_once()
+                mock_check.assert_called_once()
 
-                # Should not call fetch when span cloud export is disabled
+                # Should not call check when span cloud export is disabled
                 logger.config.enable_span_cloud_export = False
-                mock_fetch.reset_mock()
+                mock_check.reset_mock()
                 logger._check_and_refresh_credentials()
-                mock_fetch.assert_not_called()
+                mock_check.assert_not_called()
 
 
 if __name__ == '__main__':
