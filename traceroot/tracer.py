@@ -26,12 +26,14 @@ from opentelemetry.util._once import Once
 
 from traceroot.config import TraceRootConfig
 from traceroot.constants import ENV_VAR_MAPPING
+from traceroot.credentials import CredentialManager
 from traceroot.logger import initialize_logger, shutdown_logger
 from traceroot.utils.config import find_traceroot_config
 
 # Global state
 _tracer_provider: TracerProvider | None = None
 _config: TraceRootConfig | None = None
+_credential_manager: CredentialManager | None = None
 
 
 @dataclass
@@ -137,9 +139,13 @@ def init(**kwargs: Any) -> TracerProvider:
 
     _config = config
 
+    # Initialize shared credential manager
+    global _credential_manager
+    _credential_manager = CredentialManager(config)
+
     # TODO(xinwei): separate logger initialization from tracer initialization.
     # Initialize logger first
-    initialize_logger(config)
+    initialize_logger(config, _credential_manager)
 
     # Create resource with service information
     resource = Resource(
@@ -162,6 +168,11 @@ def init(**kwargs: Any) -> TracerProvider:
 
     # Only add cloud export if enabled
     if config.enable_span_cloud_export:
+        # Ensure we have fresh credentials and OTLP
+        # endpoint before creating exporter
+        if _credential_manager:
+            _credential_manager.get_credentials()
+
         exporter = OTLPSpanExporter(endpoint=config.otlp_endpoint)
         batch_processor = BatchSpanProcessor(exporter)
         provider.add_span_processor(batch_processor)
@@ -191,12 +202,13 @@ def shutdown_tracing() -> None:
     This should be called when your application is shutting down
     to ensure all traces are properly exported.
     """
-    global _tracer_provider, _config
+    global _tracer_provider, _config, _credential_manager
 
     if _tracer_provider is not None:
         _tracer_provider.shutdown()
         _tracer_provider = None
         _config = None
+        _credential_manager = None
 
     # Reset OpenTelemetry's global tracer provider to allow reinitialization
     otel_trace.set_tracer_provider(otel_trace.NoOpTracerProvider())

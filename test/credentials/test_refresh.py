@@ -51,16 +51,16 @@ class TestCredentialRefresh(unittest.TestCase):
         mock_response.json.return_value = mock_credentials
         mock_response.raise_for_status.return_value = None
 
-        with patch('traceroot.logger.requests.get',
+        with patch('traceroot.credentials.requests.get',
                    return_value=mock_response) as mock_get:
             # First call should make an HTTP request
-            result1 = self.logger._fetch_aws_credentials()
+            result1 = self.logger.credential_manager.get_credentials()
             self.assertEqual(mock_get.call_count, 1)
             self.assertEqual(result1['aws_access_key_id'], 'AKIATEST123')
 
             # Second call should use cached credentials
             # (no additional HTTP request)
-            result2 = self.logger._fetch_aws_credentials()
+            result2 = self.logger.credential_manager.get_credentials()
             self.assertEqual(mock_get.call_count, 1)  # No additional call
             self.assertEqual(result2['aws_access_key_id'], 'AKIATEST123')
 
@@ -69,7 +69,7 @@ class TestCredentialRefresh(unittest.TestCase):
         # Set up initial expired credentials
         expired_time = datetime.now(timezone.utc) + timedelta(
             minutes=20)  # Expires in 20 minutes
-        self.logger._cached_credentials = {
+        self.logger.credential_manager._cached_credentials = {
             'aws_access_key_id': 'EXPIRED123',
             'aws_secret_access_key': 'expired_secret',
             'aws_session_token': 'expired_token',
@@ -78,7 +78,7 @@ class TestCredentialRefresh(unittest.TestCase):
             'expiration_utc': expired_time.isoformat() + 'Z',
             'otlp_endpoint': 'https://otlp.test.com'
         }
-        self.logger._credentials_expiry = expired_time
+        self.logger.credential_manager._credentials_expiry = expired_time
 
         # Mock new credentials response
         new_credentials = {
@@ -103,11 +103,11 @@ class TestCredentialRefresh(unittest.TestCase):
         mock_response.json.return_value = new_credentials
         mock_response.raise_for_status.return_value = None
 
-        with patch('traceroot.logger.requests.get',
+        with patch('traceroot.credentials.requests.get',
                    return_value=mock_response):
             # Should refresh credentials because they expire in 20 minutes
             # (< 30 minute threshold)
-            result = self.logger._fetch_aws_credentials()
+            result = self.logger.credential_manager.get_credentials()
             self.assertEqual(result['aws_access_key_id'], 'NEWKEY123')
 
     def test_fetch_aws_credentials_no_refresh_when_not_expiring(self):
@@ -116,7 +116,7 @@ class TestCredentialRefresh(unittest.TestCase):
         """
         # Set up credentials that expire in 2 hours
         future_time = datetime.now(timezone.utc) + timedelta(hours=2)
-        self.logger._cached_credentials = {
+        self.logger.credential_manager._cached_credentials = {
             'aws_access_key_id': 'VALIDKEY123',
             'aws_secret_access_key': 'valid_secret',
             'aws_session_token': 'valid_token',
@@ -125,11 +125,11 @@ class TestCredentialRefresh(unittest.TestCase):
             'expiration_utc': future_time.strftime('%Y-%m-%dT%H:%M:%SZ'),
             'otlp_endpoint': 'https://otlp.test.com'
         }
-        self.logger._credentials_expiry = future_time
+        self.logger.credential_manager._credentials_expiry = future_time
 
-        with patch('traceroot.logger.requests.get') as mock_get:
+        with patch('traceroot.credentials.requests.get') as mock_get:
             # Should use cached credentials without making HTTP request
-            result = self.logger._fetch_aws_credentials()
+            result = self.logger.credential_manager.get_credentials()
             mock_get.assert_not_called()
             self.assertEqual(result['aws_access_key_id'], 'VALIDKEY123')
 
@@ -137,7 +137,7 @@ class TestCredentialRefresh(unittest.TestCase):
         """Test that force_refresh parameter bypasses cache"""
         # Set up cached credentials
         future_time = datetime.now(timezone.utc) + timedelta(hours=2)
-        self.logger._cached_credentials = {
+        self.logger.credential_manager._cached_credentials = {
             'aws_access_key_id': 'CACHEDKEY123',
             'aws_secret_access_key': 'cached_secret',
             'aws_session_token': 'cached_token',
@@ -146,7 +146,7 @@ class TestCredentialRefresh(unittest.TestCase):
             'expiration_utc': future_time.strftime('%Y-%m-%dT%H:%M:%SZ'),
             'otlp_endpoint': 'https://otlp.test.com'
         }
-        self.logger._credentials_expiry = future_time
+        self.logger.credential_manager._credentials_expiry = future_time
 
         # Mock new credentials response
         new_credentials = {
@@ -171,20 +171,21 @@ class TestCredentialRefresh(unittest.TestCase):
         mock_response.json.return_value = new_credentials
         mock_response.raise_for_status.return_value = None
 
-        with patch('traceroot.logger.requests.get',
+        with patch('traceroot.credentials.requests.get',
                    return_value=mock_response) as mock_get:
             # Force refresh should bypass cache and make HTTP request
-            result = self.logger._fetch_aws_credentials(force_refresh=True)
+            result = self.logger.credential_manager.get_credentials(
+                force_refresh=True)
             mock_get.assert_called_once()
             self.assertEqual(result['aws_access_key_id'], 'FORCEKEY123')
 
     def test_fetch_aws_credentials_http_error(self):
         """Test handling of HTTP errors during credential fetch"""
-        with patch('traceroot.logger.requests.get') as mock_get:
+        with patch('traceroot.credentials.requests.get') as mock_get:
             # Mock HTTP error
             mock_get.side_effect = requests.RequestException("Network error")
 
-            result = self.logger._fetch_aws_credentials()
+            result = self.logger.credential_manager.get_credentials()
             self.assertIsNone(result)
 
     def test_fetch_aws_credentials_returns_cached_on_error(self):
@@ -200,15 +201,16 @@ class TestCredentialRefresh(unittest.TestCase):
             'expiration_utc': future_time.strftime('%Y-%m-%dT%H:%M:%SZ'),
             'otlp_endpoint': 'https://otlp.test.com'
         }
-        self.logger._cached_credentials = cached_creds
-        self.logger._credentials_expiry = future_time
+        self.logger.credential_manager._cached_credentials = cached_creds
+        self.logger.credential_manager._credentials_expiry = future_time
 
-        with patch('traceroot.logger.requests.get') as mock_get:
+        with patch('traceroot.credentials.requests.get') as mock_get:
             # Mock HTTP error
             mock_get.side_effect = requests.RequestException("Network error")
 
             # Should return cached credentials despite error
-            result = self.logger._fetch_aws_credentials(force_refresh=True)
+            result = self.logger.credential_manager.get_credentials(
+                force_refresh=True)
             self.assertEqual(result, cached_creds)
 
     def test_refresh_credentials_success(self):
@@ -235,20 +237,22 @@ class TestCredentialRefresh(unittest.TestCase):
         mock_response.json.return_value = mock_credentials
         mock_response.raise_for_status.return_value = None
 
-        with patch('traceroot.logger.requests.get',
+        with patch('traceroot.credentials.requests.get',
                    return_value=mock_response), \
              patch.object(self.logger,
                           '_create_cloudwatch_handler') as mock_create:
 
-            self.logger.refresh_credentials()
+            result = self.logger.refresh_credentials()
             # Check that credentials were refreshed successfully
-            self.assertIsNotNone(self.logger._cached_credentials)
+            self.assertTrue(result)
+            self.assertIsNotNone(
+                self.logger.credential_manager._cached_credentials)
             # Should recreate CloudWatch handler in non-local mode
             mock_create.assert_called_once()
 
     def test_refresh_credentials_failure(self):
         """Test failed manual credential refresh"""
-        with patch('traceroot.logger.requests.get') as mock_get:
+        with patch('traceroot.credentials.requests.get') as mock_get:
             # Mock HTTP error
             mock_get.side_effect = requests.RequestException("Network error")
 
@@ -261,7 +265,7 @@ class TestCredentialRefresh(unittest.TestCase):
         """
         self.logger.config.local_mode = True
 
-        with patch('traceroot.logger.requests.get') as mock_get, \
+        with patch('traceroot.credentials.requests.get') as mock_get, \
              patch.object(self.logger,
                           '_setup_cloudwatch_handler') as mock_setup:
 
@@ -277,10 +281,11 @@ class TestCredentialRefresh(unittest.TestCase):
         """Test that _check_and_refresh_credentials skips in local mode"""
         self.logger.config.local_mode = True
 
-        with patch.object(self.logger, '_fetch_aws_credentials') as mock_fetch:
+        with patch.object(self.logger.credential_manager,
+                          'check_and_refresh_if_needed') as mock_check:
             self.logger._check_and_refresh_credentials()
-            # Should not fetch credentials in local mode
-            mock_fetch.assert_not_called()
+            # Should not check credentials in local mode
+            mock_check.assert_not_called()
 
     def test_check_and_refresh_credentials_non_local_mode(self):
         """Test that _check_and_refresh_credentials works
@@ -288,7 +293,7 @@ class TestCredentialRefresh(unittest.TestCase):
         """
         self.logger.config.local_mode = False
 
-        mock_credentials = {
+        _ = {
             'aws_access_key_id':
             'CHECKKEY123',
             'aws_secret_access_key':
@@ -306,12 +311,12 @@ class TestCredentialRefresh(unittest.TestCase):
             'https://otlp.test.com'
         }
 
-        with patch.object(self.logger,
-                          '_fetch_aws_credentials',
-                          return_value=mock_credentials) as mock_fetch:
+        with patch.object(self.logger.credential_manager,
+                          'check_and_refresh_if_needed',
+                          return_value=False) as mock_check:
             self.logger._check_and_refresh_credentials()
-            # Should fetch credentials in non-local mode
-            mock_fetch.assert_called_once()
+            # Should check credentials in non-local mode
+            mock_check.assert_called_once()
 
     def test_logging_methods_call_credential_check(self):
         """Test that logging methods call credential check"""
@@ -357,11 +362,12 @@ class TestCredentialRefresh(unittest.TestCase):
         mock_response.json.return_value = mock_credentials
         mock_response.raise_for_status.return_value = None
 
-        with patch('traceroot.logger.requests.get',
+        with patch('traceroot.credentials.requests.get',
                    return_value=mock_response):
-            result = self.logger._fetch_aws_credentials()
+            result = self.logger.credential_manager.get_credentials()
             # Should successfully parse the expiration time and cache it
-            self.assertIsNotNone(self.logger._credentials_expiry)
+            self.assertIsNotNone(
+                self.logger.credential_manager._credentials_expiry)
             self.assertEqual(result['expiration_utc'], future_expiration)
 
     def test_expiration_parsing_fallback(self):
@@ -380,15 +386,16 @@ class TestCredentialRefresh(unittest.TestCase):
         mock_response.json.return_value = mock_credentials
         mock_response.raise_for_status.return_value = None
 
-        with patch('traceroot.logger.requests.get',
+        with patch('traceroot.credentials.requests.get',
                    return_value=mock_response):
-            self.logger._fetch_aws_credentials()
+            self.logger.credential_manager.get_credentials()
             # Should set fallback expiration (12 hours from now)
-            self.assertIsNotNone(self.logger._credentials_expiry)
+            self.assertIsNotNone(
+                self.logger.credential_manager._credentials_expiry)
             expected_expiry = datetime.now(timezone.utc) + timedelta(hours=12)
             # Allow 1 minute tolerance for test execution time
             self.assertLess(
-                abs((self.logger._credentials_expiry -
+                abs((self.logger.credential_manager._credentials_expiry -
                      expected_expiry).total_seconds()), 60)
 
     def test_datetime_comparison_offset_naive_fix(self):
@@ -412,17 +419,18 @@ class TestCredentialRefresh(unittest.TestCase):
         mock_response.json.return_value = mock_credentials
         mock_response.raise_for_status.return_value = None
 
-        with patch('traceroot.logger.requests.get',
+        with patch('traceroot.credentials.requests.get',
                    return_value=mock_response):
             # This should not raise the "can't compare offset-naive
             # and offset-aware datetimes" error
-            result = self.logger._fetch_aws_credentials()
+            result = self.logger.credential_manager.get_credentials()
             self.assertIsNotNone(result)
             # Verify expiration time is timezone-aware
-            self.assertIsNotNone(self.logger._credentials_expiry.tzinfo)
+            self.assertIsNotNone(
+                self.logger.credential_manager._credentials_expiry.tzinfo)
 
             # Test that subsequent calls work (uses comparison logic)
-            result2 = self.logger._fetch_aws_credentials()
+            result2 = self.logger.credential_manager.get_credentials()
             self.assertIsNotNone(result2)
 
     def test_datetime_comparison_mixed_timezone_scenarios(self):
@@ -456,27 +464,29 @@ class TestCredentialRefresh(unittest.TestCase):
                 mock_response.json.return_value = mock_credentials
                 mock_response.raise_for_status.return_value = None
 
-                with patch('traceroot.logger.requests.get',
+                with patch('traceroot.credentials.requests.get',
                            return_value=mock_response):
                     # Clear previous cached credentials
-                    self.logger._cached_credentials = None
-                    self.logger._credentials_expiry = None
+                    self.logger.credential_manager._cached_credentials = None
+                    self.logger.credential_manager._credentials_expiry = None
 
                     # This should not raise datetime comparison errors
-                    result = self.logger._fetch_aws_credentials()
+                    result = self.logger.credential_manager.get_credentials()
                     self.assertIsNotNone(result)
-                    self.assertIsNotNone(self.logger._credentials_expiry)
-                    # Verify all expiration times are timezone-aware
                     self.assertIsNotNone(
-                        self.logger._credentials_expiry.tzinfo)
+                        self.logger.credential_manager._credentials_expiry)
+                    # Verify all expiration times are timezone-aware
+                    self.assertIsNotNone(self.logger.credential_manager.
+                                         _credentials_expiry.tzinfo)
 
     def test_silent_exception_handling_in_credential_check(self):
         """Test that _check_and_refresh_credentials silently handles exceptions
         """
-        with patch.object(self.logger, '_fetch_aws_credentials') as mock_fetch:
-            # Mock _fetch_aws_credentials to raise an exception
-            mock_fetch.side_effect = Exception(
-                "Simulated credential fetch error")
+        with patch.object(self.logger.credential_manager,
+                          'check_and_refresh_if_needed') as mock_check:
+            # Mock check_and_refresh_if_needed to raise an exception
+            mock_check.side_effect = Exception(
+                "Simulated credential check error")
 
             # Capture any logs that might be emitted
             with patch.object(self.logger.logger, 'error') as mock_error:

@@ -3,15 +3,14 @@ import logging
 import os
 import sys
 import time
-from datetime import datetime, timedelta, timezone
 from typing import Any
 
 import boto3
-import requests
 import watchtower
 from opentelemetry.trace import get_current_span
 
 from traceroot.config import TraceRootConfig
+from traceroot.credentials import CredentialManager
 
 
 class TraceIdFilter(logging.Filter):
@@ -172,16 +171,19 @@ class SpanEventHandler(logging.Handler):
 class TraceRootLogger:
     """Enhanced logger with trace correlation and AWS integration"""
 
-    def __init__(self, config: TraceRootConfig, name: str | None = None):
+    def __init__(self,
+                 config: TraceRootConfig,
+                 credential_manager: CredentialManager | None = None,
+                 name: str | None = None):
         self.config = config
+        # Use provided credential manager or create a new one
+        self.credential_manager = credential_manager or CredentialManager(
+            config)
+
         # TODO: investigate whether we need to add traceroot
         # prefix to the logger name
         self.logger = logging.getLogger(name or config.service_name)
         self.logger.setLevel(logging.DEBUG)
-
-        # Credential caching with expiration
-        self._cached_credentials: dict[str, Any] | None = None
-        self._credentials_expiry: datetime | None = None
 
         # Configure logging to use UTC time
         logging.Formatter.converter = time.gmtime
@@ -215,83 +217,7 @@ class TraceRootLogger:
         console_handler = logging.StreamHandler(sys.stdout)
         self.logger.addHandler(console_handler)
 
-    def _needs_credentials_refresh(self, force_refresh: bool = False) -> bool:
-        """Check if credentials need to be refreshed.
-
-        Args:
-            force_refresh: If True, always refresh credentials
-
-        Returns:
-            True if credentials need to be refreshed, False otherwise
-        """
-        if force_refresh:
-            return True
-
-        if not self._cached_credentials or not self._credentials_expiry:
-            return True
-
-        utc_now = datetime.now(timezone.utc)
-        # Refresh if credentials expire within 30 minutes
-        return utc_now >= (self._credentials_expiry - timedelta(minutes=30))
-
-    def _fetch_aws_credentials(
-        self,
-        force_refresh: bool = False,
-    ) -> dict[str, Any] | None:
-        """Fetch AWS credentials from the traceroot endpoint
-        with caching and auto-refresh"""
-        utc_now = datetime.now(timezone.utc)
-
-        # Check if we need to refresh credentials
-        if not self._needs_credentials_refresh(force_refresh):
-            return self._cached_credentials
-
-        # Clear cached credentials if they're expired
-        # TODO: now this is not necessary
-        if self._credentials_expiry and utc_now >= self._credentials_expiry:
-            self._cached_credentials = None
-
-        try:
-            url = self.config.verification_endpoint
-            params = {"token": self.config.token}
-            headers = {"Content-Type": "application/json"}
-
-            response = requests.get(url, params=params, headers=headers)
-            response.raise_for_status()
-
-            credentials = response.json()
-
-            # Parse expiration time from credentials
-            expiration_str = credentials.get('expiration_utc')
-            if isinstance(expiration_str, str):
-                # Parse ISO format datetime string and ensure timezone-aware
-                expiration_dt = datetime.fromisoformat(
-                    expiration_str.replace('Z', '+00:00'))
-                # Ensure timezone-aware, convert to UTC if not already
-                if expiration_dt.tzinfo is None:
-                    expiration_dt = expiration_dt.replace(tzinfo=timezone.utc)
-            else:
-                # Fallback: assume 12 hours from now if no expiration provided
-                expiration_dt = utc_now + timedelta(hours=12)
-
-            # Cache the credentials and expiration time
-            self._cached_credentials = {
-                'aws_access_key_id': credentials['aws_access_key_id'],
-                'aws_secret_access_key': credentials['aws_secret_access_key'],
-                'aws_session_token': credentials['aws_session_token'],
-                'region': credentials['region'],
-                'hash': credentials['hash'],
-                'expiration_utc': expiration_str,
-                'otlp_endpoint': credentials['otlp_endpoint'],
-            }
-            self._credentials_expiry = expiration_dt
-
-            return self._cached_credentials
-
-        except Exception:
-            # Return cached credentials if available, even if expired
-            # Silently handle credential fetch errors
-            return self._cached_credentials
+    # Credential management is now handled by the shared CredentialManager
 
     def _create_cloudwatch_handler(
         self,
@@ -308,7 +234,7 @@ class TraceRootLogger:
         try:
             # Use provided credentials or fetch them
             if credentials is None:
-                credentials = self._fetch_aws_credentials()
+                credentials = self.credential_manager.get_credentials()
 
             if not credentials:
                 session = boto3.Session(region_name=self.config.aws_region)
@@ -348,12 +274,8 @@ class TraceRootLogger:
         global _cloudwatch_handler
         try:
             # Fetch AWS credentials from the endpoint
-            credentials = self._fetch_aws_credentials()
-
-            # Update config with credentials if available
-            if credentials:
-                self.config._name = credentials['hash']
-                self.config.otlp_endpoint = credentials['otlp_endpoint']
+            credentials = self.credential_manager.get_credentials()
+            # Note: config is automatically updated by credential manager
 
             # Create and add the CloudWatch handler
             cloudwatch_handler = self._create_cloudwatch_handler(credentials)
@@ -365,47 +287,35 @@ class TraceRootLogger:
             # Silently handle credential fetch errors
             pass
 
-    def refresh_credentials(self) -> None:
+    def refresh_credentials(self) -> bool:
         """Manually refresh AWS credentials, update otlp endpoint
         and recreate CloudWatch handler if needed
+
+        Returns:
+            True if refresh was successful, False otherwise
         """
         global _cloudwatch_handler
 
         if self.config.local_mode or not self.config.enable_span_cloud_export:
             # No credentials needed in local mode or
             # when span cloud export is disabled
-            return
+            return False
 
         try:
             # Force refresh credentials
-            credentials = self._fetch_aws_credentials(force_refresh=True)
+            credentials = self.credential_manager.get_credentials(
+                force_refresh=True)
             if not credentials:
-                return
+                return False
 
-            # If not in local mode and span cloud export is enabled,
-            # and log cloud export is enabled,
-            # recreate CloudWatch handler with new credentials if it exists
-            if (not self.config.local_mode
-                    and self.config.enable_span_cloud_export
-                    and self.config.enable_log_cloud_export):
-
-                # Update config with new credentials first
-                self.config._name = credentials['hash']
-                self.config.otlp_endpoint = credentials['otlp_endpoint']
-
-                # If log cloud export is disabled,
-                # we don't need to recreate the CloudWatch handler
-                # as we already updated the otlp endpoint
-                if not self.config.enable_log_cloud_export:
-                    return
-
+            # Only recreate CloudWatch handler if log cloud export is enabled
+            if self.config.enable_log_cloud_export:
                 # Create new CloudWatch handler first (before removing old one)
                 new_cloudwatch_handler = self._create_cloudwatch_handler(
                     credentials)
 
                 # Remove existing CloudWatch handler if present
-                # (only exists if log export is enabled)
-                if _cloudwatch_handler and self.config.enable_log_cloud_export:
+                if _cloudwatch_handler:
                     try:
                         _cloudwatch_handler.flush()
                         _cloudwatch_handler.close()
@@ -420,9 +330,11 @@ class TraceRootLogger:
                     # Store reference for proper shutdown
                     _cloudwatch_handler = new_cloudwatch_handler
 
+            return True
+
         except Exception:
             # Silently handle credential refresh errors
-            pass
+            return False
 
     def _setup_otlp_logging_handler(self):
         """Setup OpenTelemetry logging handler for local mode
@@ -442,29 +354,23 @@ class TraceRootLogger:
 
     def _check_and_refresh_credentials(self) -> None:
         """Check if credentials need refreshing and refresh if necessary"""
-        if self.config.local_mode or not self.config.enable_span_cloud_export:
-            # No need to refresh in local mode or
-            # when span cloud export is disabled
+        if self.config.local_mode:
             return
 
-        if not self._needs_credentials_refresh():
+        if not self.config.enable_span_cloud_export:
             return
 
+        # Check if credentials changed (this also refreshes them automatically)
         try:
-            # Store old credentials to check if they changed
-            old_credentials = self._cached_credentials
-            # This will automatically refresh if needed based on
-            # expiration time and the credential expiration time
-            # will be updated in the _fetch_aws_credentials method
-            new_credentials = self._fetch_aws_credentials()
+            credentials_changed = \
+                self.credential_manager.check_and_refresh_if_needed()
 
             # If credentials changed and we have CloudWatch logging enabled,
-            # refresh the handler
-            if (new_credentials and old_credentials
-                    and new_credentials != old_credentials):
+            # refresh the CloudWatch handler
+            if credentials_changed and self.config.enable_log_cloud_export:
                 self.refresh_credentials()
         except Exception:
-            # Silently handle credential expiration check errors
+            # Silently handle credential refresh errors
             pass
 
     def _increment_span_log_count(self, attribute_name: str):
@@ -516,10 +422,13 @@ _global_logger: TraceRootLogger | None = None
 _cloudwatch_handler: watchtower.CloudWatchLogHandler | None = None
 
 
-def initialize_logger(config: TraceRootConfig) -> TraceRootLogger:
+def initialize_logger(
+        config: TraceRootConfig,
+        credential_manager: CredentialManager | None = None
+) -> TraceRootLogger:
     """Initialize the global logger instance"""
     global _global_logger
-    _global_logger = TraceRootLogger(config)
+    _global_logger = TraceRootLogger(config, credential_manager)
     return _global_logger
 
 
@@ -571,5 +480,10 @@ def get_logger(name: str | None = None) -> TraceRootLogger:
     if name is None:
         return _global_logger
 
-    # Create a new logger with the same config but different name
-    return TraceRootLogger(_global_logger.config, name)
+    # Create a new logger with the same config and
+    # credential manager but different name
+    return TraceRootLogger(
+        _global_logger.config,
+        _global_logger.credential_manager,
+        name,
+    )

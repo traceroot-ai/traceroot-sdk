@@ -51,18 +51,18 @@ class TestTracer(unittest.TestCase):
         logger_module._global_logger = None
         logger_module._cloudwatch_handler = None
 
-    @patch('traceroot.logger.TraceRootLogger._fetch_aws_credentials')
+    @patch('traceroot.credentials.CredentialManager.get_credentials')
     @patch('boto3.Session')
     def test_both_console_and_cloud_span_enabled(
         self,
         mock_boto_session,
-        mock_fetch_credentials,
+        mock_get_credentials,
     ):
         """Test that both console and cloud span processors
         are added when both are enabled
         """
         # Mock AWS credentials
-        mock_fetch_credentials.return_value = None
+        mock_get_credentials.return_value = None
         mock_boto_session.return_value = MagicMock()
 
         provider = init(service_name="test-service",
@@ -133,15 +133,15 @@ class TestTracer(unittest.TestCase):
         self.assertIn(SimpleSpanProcessor, processor_types)
         self.assertNotIn(BatchSpanProcessor, processor_types)
 
-    @patch('traceroot.logger.TraceRootLogger._fetch_aws_credentials')
+    @patch('traceroot.credentials.CredentialManager.get_credentials')
     @patch('boto3.Session')
     def test_only_cloud_span_enabled(self, mock_boto_session,
-                                     mock_fetch_credentials):
+                                     mock_get_credentials):
         """Test that only cloud span processor is added
         when only cloud is enabled
         """
         # Mock AWS credentials
-        mock_fetch_credentials.return_value = None
+        mock_get_credentials.return_value = None
         mock_boto_session.return_value = MagicMock()
 
         provider = init(service_name="test-service",
