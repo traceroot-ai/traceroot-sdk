@@ -9,10 +9,16 @@ from rest.main import MultiAgentSystem
 import traceroot
 from traceroot.integrations.fastapi import connect_fastapi
 from traceroot.logger import get_logger
+
 logger = get_logger()
 
 app = FastAPI(title="TraceRoot Multi-Agent Code Server")
 connect_fastapi(app)
+system = MultiAgentSystem()
+
+
+class CodeRequest(BaseModel):
+    query: str
 
 
 @app.post("/code")
