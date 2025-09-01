@@ -1,3 +1,5 @@
+# TraceRoot SDK
+
 <div align="center">
   <a href="https://traceroot.ai/">
     <img src="https://raw.githubusercontent.com/traceroot-ai/traceroot/main/misc/images/traceroot_logo.png" alt="TraceRoot Logo">
@@ -6,22 +8,14 @@
 
 <div align="center">
 
-[![Product Hunt](https://api.producthunt.com/widgets/embed-image/v1/top-post-badge.svg?post_id=1004840&theme=dark&period=daily&t=1756191789618)](https://www.producthunt.com/products/traceroot-ai?embed=true&utm_source=badge-top-post-badge&utm_medium=badge&utm_source=badge-traceroot-ai)
-
 [![Testing Status][testing-image]][testing-url]
 [![Documentation][docs-image]][docs-url]
 [![Discord][discord-image]][discord-url]
 [![PyPI Version][pypi-image]][pypi-url]
 [![PyPI SDK Downloads][pypi-sdk-downloads-image]][pypi-sdk-downloads-url]
-[![npm version][npm-image]][npm-url]
 [![TraceRoot.AI Website][company-website-image]][company-website-url]
-[![X][zecheng-x-image]][zecheng-x-url]
-[![X][xinwei-x-image]][xinwei-x-url]
-[![Y Combinator][y-combinator-image]][y-combinator-url]
 
 </div>
-
-# TraceRoot SDK
 
 TraceRoot SDK is a clean and principled package built upon OpenTelemetry with enhanced debugging and tracing experience. It provides smart logging and tracing with minimal setup and code changes.
 
@@ -39,11 +33,7 @@ pip install traceroot
 pip install -e .
 ```
 
-## Cloud Mode
-
-Cloud mode is to use TraceRoot's cloud service to store the logs and traces.
-
-### Prerequisite
+## Prerequisite
 
 For the TraceRoot SDK to work with your application, you need to set up some environment variables with some credentials.
 
@@ -89,7 +79,7 @@ You can run following example to see how to use the environment variables:
 TRACEROOT_TOKEN=traceroot-* TRACEROOT_SERVICE_NAME=new_name TRACEROOT_ENABLE_LOG_CLOUD_EXPORT=1 python3 examples/override_example.py
 ```
 
-### Priority of the Configuration
+## Priority of the Configuration
 
 The priority of the configuration is as follows:
 
@@ -99,89 +89,15 @@ The priority of the configuration is as follows:
 
 For example, if you provide the configuration in the environment variables, the configuration in the `.traceroot-config.yaml` file will be overridden.
 
-## Local Mode
-
-Local mode is to use TraceRoot's local database to store the logs and traces.
-
-### Prerequisite
-
-You need to set up a local database to store the logs and traces by running the jaeger docker container.
-
-Download the Jaeger Docker image:
-
-```bash
-docker run cr.jaegertracing.io/jaegertracing/jaeger:2.8.0 --help
-```
-
-Run the Jaeger Docker container:
-
-```bash
-docker stop jaeger || true && docker rm jaeger || true && docker run -d --name jaeger \
-  -e COLLECTOR_OTLP_ENABLED=true \
-  -p 16686:16686 \
-  -p 14268:14268 \
-  -p 14250:14250 \
-  -p 4317:4317 \
-  -p 4318:4318 \
-  cr.jaegertracing.io/jaegertracing/jaeger:2.8.0
-
-docker logs -f jaeger
-```
-
-Then you need to use following code to initialize the TraceRoot SDK in local mode:
-
-```python
-traceroot.init(
-    service_name="sdk-example-service",
-    github_owner="traceroot-ai",
-    github_repo_name="traceroot-sdk",
-    github_commit_hash="main"
-    local_mode=True
-)
-```
-
-Or you can just put them in a yaml file called `.traceroot-config.yaml` in the root of your project:
-
-```yaml
-service_name: "sdk-example-service"
-github_owner: "traceroot-ai"
-github_repo_name: "traceroot-sdk"
-github_commit_hash: "main"
-local_mode: true
-```
-
-There is an example of using the configuration file for the local mode in the `.traceroot-config-local.yaml` file.
-
-## Other Settings
-
-You can also set the following settings in the `.traceroot-config.yaml` file:
-
-- `enable_span_console_export`: Whether to enable console export and print the spans to the console.
-- `enable_log_console_export`: Whether to enable console export and print the logs to the console.
-
 ## Examples
 
 For an end-to-end example that uses the TraceRoot SDK for a multi-agent system, please refer to the [Multi-agent System with TraceRoot SDK](https://docs.traceroot.ai/essentials/journey).
 
 The source code of the multi-agent system example is available in [`traceroot-examples/examples/multi_agent`](https://github.com/traceroot-ai/traceroot-examples/tree/main/examples/multi_agent).
 
-## Citation
-
-If you use our exploratory TraceRoot SDK in your research, please cite the following paper:
-
-```bibtex
-@article{traceroot_2025,
-  title={TraceRoot Is All You Need for Debugging and Tracing},
-  author={Zecheng Zhang and Xinwei He},
-  year = {2025},
-  publisher = {GitHub},
-  url = {https://github.com/traceroot-ai/traceroot}
-}
-```
-
 ## Contact Us
 
-Please reach out to founders@traceroot.ai or visit [TraceRoot.AI](https://traceroot.ai) if you do not have these credentials or have any questions.
+Please reach out to founders@traceroot.ai or visit [TraceRoot.AI](https://traceroot.ai) if you have any questions.
 
 [company-website-image]: https://img.shields.io/badge/website-traceroot.ai-black
 [company-website-url]: https://traceroot.ai
@@ -189,17 +105,9 @@ Please reach out to founders@traceroot.ai or visit [TraceRoot.AI](https://tracer
 [discord-url]: https://discord.gg/tPyffEZvvJ
 [docs-image]: https://img.shields.io/badge/docs-traceroot.ai-0dbf43
 [docs-url]: https://docs.traceroot.ai
-[npm-image]: https://img.shields.io/npm/v/traceroot-sdk-ts?style=flat-square&logo=npm&logoColor=fff
-[npm-url]: https://www.npmjs.com/package/traceroot-sdk-ts
 [pypi-image]: https://badge.fury.io/py/traceroot.svg
 [pypi-sdk-downloads-image]: https://static.pepy.tech/badge/traceroot
 [pypi-sdk-downloads-url]: https://pypi.python.org/pypi/traceroot
 [pypi-url]: https://pypi.python.org/pypi/traceroot
 [testing-image]: https://github.com/traceroot-ai/traceroot/actions/workflows/test.yml/badge.svg
 [testing-url]: https://github.com/traceroot-ai/traceroot/actions/workflows/test.yml
-[xinwei-x-image]: https://img.shields.io/twitter/follow/xinwei_97?style=social
-[xinwei-x-url]: https://x.com/xinwei_97
-[y-combinator-image]: https://img.shields.io/badge/Combinator-S25-orange?logo=ycombinator&labelColor=white
-[y-combinator-url]: https://www.ycombinator.com/companies/traceroot-ai
-[zecheng-x-image]: https://img.shields.io/twitter/follow/zechengzh?style=social
-[zecheng-x-url]: https://x.com/zechengzh
