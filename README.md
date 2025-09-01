@@ -1,4 +1,4 @@
-# TraceRoot SDK
+# TraceRoot Python SDK
 
 <div align="center">
   <a href="https://traceroot.ai/">
@@ -10,18 +10,13 @@
 
 [![Testing Status][testing-image]][testing-url]
 [![Documentation][docs-image]][docs-url]
-[![Discord][discord-image]][discord-url]
 [![PyPI Version][pypi-image]][pypi-url]
 [![PyPI SDK Downloads][pypi-sdk-downloads-image]][pypi-sdk-downloads-url]
 [![TraceRoot.AI Website][company-website-image]][company-website-url]
 
 </div>
 
-TraceRoot SDK is a clean and principled package built upon OpenTelemetry with enhanced debugging and tracing experience. It provides smart logging and tracing with minimal setup and code changes.
-
-## Quick Start
-
-You can follow the [docs](https://docs.traceroot.ai/) here to get more details and have a deeper understanding of the TraceRoot SDK.
+Please see the [Python SDK Docs](https://docs.traceroot.ai/sdk/python) for details.
 
 ## Installation
 
@@ -89,20 +84,12 @@ The priority of the configuration is as follows:
 
 For example, if you provide the configuration in the environment variables, the configuration in the `.traceroot-config.yaml` file will be overridden.
 
-## Examples
-
-For an end-to-end example that uses the TraceRoot SDK for a multi-agent system, please refer to the [Multi-agent System with TraceRoot SDK](https://docs.traceroot.ai/essentials/journey).
-
-The source code of the multi-agent system example is available in [`traceroot-examples/examples/multi_agent`](https://github.com/traceroot-ai/traceroot-examples/tree/main/examples/multi_agent).
-
 ## Contact Us
 
 Please reach out to founders@traceroot.ai or visit [TraceRoot.AI](https://traceroot.ai) if you have any questions.
 
 [company-website-image]: https://img.shields.io/badge/website-traceroot.ai-black
 [company-website-url]: https://traceroot.ai
-[discord-image]: https://img.shields.io/discord/1395844148568920114?logo=discord&labelColor=%235462eb&logoColor=%23f5f5f5&color=%235462eb
-[discord-url]: https://discord.gg/tPyffEZvvJ
 [docs-image]: https://img.shields.io/badge/docs-traceroot.ai-0dbf43
 [docs-url]: https://docs.traceroot.ai
 [pypi-image]: https://badge.fury.io/py/traceroot.svg
