@@ -86,7 +86,7 @@ For example, if you provide the configuration in the environment variables, the 
 
 ## Contact Us
 
-Please reach out to founders@traceroot.ai or visit [TraceRoot.AI](https://traceroot.ai) if you have any questions.
+Please reach out to founders@traceroot.ai if you have any questions.
 
 [company-website-image]: https://img.shields.io/badge/website-traceroot.ai-black
 [company-website-url]: https://traceroot.ai
