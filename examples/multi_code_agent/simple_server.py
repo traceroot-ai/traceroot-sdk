@@ -7,18 +7,13 @@ from pydantic import BaseModel
 from rest.main import MultiAgentSystem
 
 import traceroot
-from traceroot.integrations.fastapi import connect_fastapi
 from traceroot.logger import get_logger
-
 logger = get_logger()
 
+
+from traceroot.integrations.fastapi import connect_fastapi
 app = FastAPI(title="TraceRoot Multi-Agent Code Server")
 connect_fastapi(app)
-system = MultiAgentSystem()
-
-
-class CodeRequest(BaseModel):
-    query: str
 
 
 @app.post("/code")
@@ -33,6 +28,13 @@ async def code_endpoint(request: CodeRequest) -> Dict[str, str]:
         logger.error(f"Error processing query: {str(e)}")
         raise HTTPException(status_code=500,
                             detail=f"Query processing failed: {str(e)}")
+
+
+system = MultiAgentSystem()
+
+
+class CodeRequest(BaseModel):
+    query: str
 
 
 if __name__ == "__main__":
