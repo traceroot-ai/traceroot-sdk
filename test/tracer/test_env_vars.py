@@ -27,7 +27,8 @@ class TestEnvironmentVariables(unittest.TestCase):
             'TRACEROOT_TOKEN', 'TRACEROOT_SERVICE_NAME',
             'TRACEROOT_ENVIRONMENT', 'TRACEROOT_LOCAL_MODE',
             'TRACEROOT_ENABLE_SPAN_CONSOLE_EXPORT', 'TRACEROOT_AWS_REGION',
-            'TRACEROOT_ENABLE_LOG_CONSOLE_EXPORT'
+            'TRACEROOT_ENABLE_LOG_CONSOLE_EXPORT', 'TRACEROOT_TRACER_VERBOSE',
+            'TRACEROOT_LOGGER_VERBOSE'
         ]
         for var in env_vars:
             if var in os.environ:
@@ -136,3 +137,114 @@ class TestEnvironmentVariables(unittest.TestCase):
         # Verify non-env values from kwargs remain
         self.assertEqual(config.service_name, 'kwarg-service')
         self.assertEqual(config.environment, 'kwarg-environment')
+
+    def test_tracer_verbose_env_var(self):
+        """Test that TRACEROOT_TRACER_VERBOSE environment variable works "
+        "correctly"""
+        # Test that tracer_verbose is properly loaded from environment
+        os.environ['TRACEROOT_TRACER_VERBOSE'] = 'true'
+
+        env_config = tracer._load_env_config()
+        self.assertTrue(env_config['tracer_verbose'])
+
+        # Test with different boolean values
+        test_cases = [
+            ('true', True),
+            ('True', True),
+            ('TRUE', True),
+            ('1', True),
+            ('yes', True),
+            ('on', True),
+            ('false', False),
+            ('False', False),
+            ('FALSE', False),
+            ('0', False),
+            ('no', False),
+            ('off', False),
+        ]
+
+        for env_value, expected_bool in test_cases:
+            with self.subTest(env_value=env_value, expected=expected_bool):
+                os.environ['TRACEROOT_TRACER_VERBOSE'] = env_value
+                env_config = tracer._load_env_config()
+                self.assertEqual(env_config['tracer_verbose'], expected_bool)
+
+        # Test that tracer_verbose is properly set in config
+        # during initialization
+        os.environ['TRACEROOT_TRACER_VERBOSE'] = 'true'
+        tracer.init(service_name='test-service',
+                    github_owner='test-owner',
+                    github_repo_name='test-repo',
+                    github_commit_hash='abc123')
+
+        config = tracer.get_config()
+        self.assertTrue(config.tracer_verbose)
+
+        # Test that env var overrides kwargs
+        tracer.init(
+            service_name='test-service',
+            github_owner='test-owner',
+            github_repo_name='test-repo',
+            github_commit_hash='abc123',
+            tracer_verbose=False  # Should be overridden by env var
+        )
+
+        config = tracer.get_config()
+        self.assertTrue(
+            config.tracer_verbose)  # Should still be True from env var
+
+    def test_logger_verbose_env_var(self):
+        """Test that TRACEROOT_LOGGER_VERBOSE environment variable
+        works correctly
+        """
+        # Test that logger_verbose is properly loaded from environment
+        os.environ['TRACEROOT_LOGGER_VERBOSE'] = 'true'
+
+        env_config = tracer._load_env_config()
+        self.assertTrue(env_config['logger_verbose'])
+
+        # Test with different boolean values
+        test_cases = [
+            ('true', True),
+            ('True', True),
+            ('TRUE', True),
+            ('1', True),
+            ('yes', True),
+            ('on', True),
+            ('false', False),
+            ('False', False),
+            ('FALSE', False),
+            ('0', False),
+            ('no', False),
+            ('off', False),
+        ]
+
+        for env_value, expected_bool in test_cases:
+            with self.subTest(env_value=env_value, expected=expected_bool):
+                os.environ['TRACEROOT_LOGGER_VERBOSE'] = env_value
+                env_config = tracer._load_env_config()
+                self.assertEqual(env_config['logger_verbose'], expected_bool)
+
+        # Test that logger_verbose is properly set in config during
+        # initialization
+        os.environ['TRACEROOT_LOGGER_VERBOSE'] = 'true'
+        tracer.init(service_name='test-service',
+                    github_owner='test-owner',
+                    github_repo_name='test-repo',
+                    github_commit_hash='abc123')
+
+        config = tracer.get_config()
+        self.assertTrue(config.logger_verbose)
+
+        # Test that env var overrides kwargs
+        tracer.init(
+            service_name='test-service',
+            github_owner='test-owner',
+            github_repo_name='test-repo',
+            github_commit_hash='abc123',
+            logger_verbose=False  # Should be overridden by env var
+        )
+
+        config = tracer.get_config()
+        self.assertTrue(
+            config.logger_verbose)  # Should still be True from env var

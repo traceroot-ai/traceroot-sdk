@@ -14,42 +14,28 @@ from traceroot.credentials import CredentialManager
 
 
 def log_verbose(config: TraceRootConfig, message: str, *args: Any) -> None:
-    """Helper function for conditional verbose logging
+    """Helper function for conditional verbose logging (logger debugging)
 
     Args:
         config: TraceRootConfig instance
         message: Log message to output
         *args: Additional arguments to pass to logger
     """
-    if config.tracer_verbose:
-        # Import here to avoid circular imports
-        from traceroot.logger import get_logger
-        try:
-            logger = get_logger()
-            logger.info(f"[TraceRoot] {message}", *args)
-        except RuntimeError:
-            # Fallback to print if logger not initialized yet
-            print(f"[TraceRoot] {message}", *args)
+    if config.logger_verbose:
+        print(f"[TraceRoot-Logger] {message}", *args)
 
 
 def log_verbose_error(config: TraceRootConfig, message: str, *args:
                       Any) -> None:
-    """Helper function for conditional verbose error logging
+    """Helper function for conditional verbose error logging (logger debugging)
 
     Args:
         config: TraceRootConfig instance
         message: Error message to output
         *args: Additional arguments to pass to logger
     """
-    if config.tracer_verbose:
-        # Import here to avoid circular imports
-        from traceroot.logger import get_logger
-        try:
-            logger = get_logger()
-            logger.error(f"[TraceRoot] {message}", *args)
-        except RuntimeError:
-            # Fallback to print if logger not initialized yet
-            print(f"[TraceRoot] ERROR: {message}", *args, file=sys.stderr)
+    if config.logger_verbose:
+        print(f"[TraceRoot-Logger] ERROR: {message}", *args, file=sys.stderr)
 
 
 class TraceIdFilter(logging.Filter):
@@ -215,6 +201,9 @@ class TraceRootLogger:
                  credential_manager: CredentialManager | None = None,
                  name: str | None = None):
         self.config = config
+        log_verbose(config, "Setting up logger with service name:", name
+                    or config.service_name)
+
         # Use provided credential manager or create a new one
         self.credential_manager = credential_manager or CredentialManager(
             config)
@@ -223,6 +212,7 @@ class TraceRootLogger:
         # prefix to the logger name
         self.logger = logging.getLogger(name or config.service_name)
         self.logger.setLevel(logging.DEBUG)
+        log_verbose(config, "Logger level set to DEBUG")
 
         # Configure logging to use UTC time
         logging.Formatter.converter = time.gmtime
@@ -241,14 +231,17 @@ class TraceRootLogger:
 
         # Setup handlers
         if self.config.enable_log_console_export:
+            log_verbose(config, "Setting up console log handler...")
             self._setup_console_handler()
         if (not self.config.local_mode
                 and self.config.enable_span_cloud_export):
             # We still need to fetch the credentials to get the otlp endpoint
             # if the enable_log_cloud_export is False,
             # so we can still send logs to the traceroot endpoint
+            log_verbose(config, "Setting up CloudWatch log handler...")
             self._setup_cloudwatch_handler()
         else:
+            log_verbose(config, "Setting up OTLP logging handler...")
             self._setup_otlp_logging_handler()
 
     def _setup_console_handler(self):
@@ -270,42 +263,128 @@ class TraceRootLogger:
         Returns:
             CloudWatch handler instance or None if creation failed
         """
+        log_verbose(self.config, "Starting CloudWatch handler creation...")
+
         try:
             # Use provided credentials or fetch them
             if credentials is None:
+                log_verbose(
+                    self.config,
+                    "No credentials provided, fetching from credential "
+                    "manager...")
                 credentials = self.credential_manager.get_credentials()
+            else:
+                log_verbose(
+                    self.config,
+                    "Using provided credentials for CloudWatch handler")
 
             if not credentials:
+                log_verbose(
+                    self.config,
+                    "No credentials available, using default AWS session")
+                log_verbose(self.config,
+                            f"Using AWS region: {self.config.aws_region}")
                 session = boto3.Session(region_name=self.config.aws_region)
                 log_group = self.config._name
+                log_verbose(self.config,
+                            f"Using log group from config: {log_group}")
             else:
                 log_group = credentials['hash']
+                log_verbose(self.config,
+                            f"Using credentials with hash: {log_group}")
+                log_verbose(
+                    self.config, f"Using AWS region from credentials: "
+                    f"{credentials['region']}")
+                log_verbose(
+                    self.config, f"Using AWS access key ID: "
+                    f"{credentials['aws_access_key_id'][:8]}...")
+
                 session = boto3.Session(
                     aws_access_key_id=credentials['aws_access_key_id'],
                     aws_secret_access_key=credentials['aws_secret_access_key'],
                     aws_session_token=credentials['aws_session_token'],
                     region_name=credentials['region'])
+                log_verbose(self.config, "AWS session created successfully")
 
             # Only create CloudWatch handler if log cloud export is enabled
             if not self.config.enable_log_cloud_export:
+                log_verbose(
+                    self.config,
+                    "Log cloud export disabled, skipping CloudWatch "
+                    "handler creation")
                 return None
+
+            log_verbose(
+                self.config,
+                "Log cloud export enabled, proceeding with CloudWatch "
+                "handler creation")
+            log_verbose(
+                self.config,
+                f"Creating CloudWatch handler with log group: {log_group}")
+            log_verbose(self.config,
+                        f"Using stream name: {self.config._sub_name}")
+
+            # Create CloudWatch logs client
+            logs_client = session.client('logs')
+            log_verbose(self.config,
+                        "CloudWatch logs client created successfully")
 
             cloudwatch_handler = watchtower.CloudWatchLogHandler(
                 log_group=log_group,
                 stream_name=self.config._sub_name,
-                boto3_client=session.client('logs'),
+                boto3_client=logs_client,
                 # Disable queues to prevent background thread issues
                 send_interval=0.05,
                 max_batch_size=1,
                 max_batch_count=1,
                 create_log_group=True,
                 use_queues=False)
+
+            log_verbose(self.config,
+                        "CloudWatch handler instance created successfully")
+            log_verbose(
+                self.config,
+                "Configuring CloudWatch handler with formatter and "
+                "trace filter...")
+
             cloudwatch_handler.setFormatter(self.formatter)
             cloudwatch_handler.addFilter(self.trace_filter)
 
+            log_verbose(
+                self.config,
+                "CloudWatch handler configuration completed successfully")
+            log_verbose(
+                self.config,
+                f"CloudWatch handler ready for log group: {log_group}")
+
             return cloudwatch_handler
-        except Exception:
-            # Silently handle handler creation errors
+
+        except Exception as e:
+            # Log the error with detailed information
+            log_verbose_error(self.config,
+                              f"Failed to create CloudWatch handler: {e}")
+            log_verbose_error(self.config, f"Error type: {type(e).__name__}")
+            log_verbose_error(self.config, f"Error details: {str(e)}")
+
+            # Log additional context for debugging
+            if credentials:
+                log_verbose_error(
+                    self.config, f"Had credentials with hash: "
+                    f"{credentials.get('hash', 'unknown')}")
+                log_verbose_error(
+                    self.config, f"Credentials region: "
+                    f"{credentials.get('region', 'unknown')}")
+            else:
+                log_verbose_error(self.config, "No credentials were available")
+
+            log_verbose_error(
+                self.config, f"Log cloud export enabled: "
+                f"{self.config.enable_log_cloud_export}")
+            log_verbose_error(self.config,
+                              f"Service name: {self.config.service_name}")
+            log_verbose_error(self.config,
+                              f"Environment: {self.config.environment}")
+
             return None
 
     def _setup_cloudwatch_handler(self):
@@ -482,8 +561,17 @@ def initialize_logger(
         credential_manager: CredentialManager | None = None
 ) -> TraceRootLogger:
     """Initialize the global logger instance"""
+    log_verbose(config, "Initializing TraceRoot logger...")
+    log_verbose(
+        config, f"Logger config: service_name={config.service_name}, "
+        f"environment={config.environment}, "
+        f"enable_log_console_export={config.enable_log_console_export}, "
+        f"enable_log_cloud_export={config.enable_log_cloud_export}")
+
     global _global_logger
     _global_logger = TraceRootLogger(config, credential_manager)
+
+    log_verbose(config, "Logger initialization completed successfully")
     return _global_logger
 
 
