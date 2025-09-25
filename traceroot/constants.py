@@ -20,4 +20,5 @@ ENV_VAR_MAPPING = {
     "TRACEROOT_ENABLE_LOG_CLOUD_EXPORT": "enable_log_cloud_export",
     "TRACEROOT_LOCAL_MODE": "local_mode",
     "TRACEROOT_VERIFICATION_ENDPOINT": "verification_endpoint",
+    "TRACEROOT_TRACER_VERBOSE": "tracer_verbose",
 }

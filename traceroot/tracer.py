@@ -27,7 +27,8 @@ from opentelemetry.util._once import Once
 from traceroot.config import TraceRootConfig
 from traceroot.constants import ENV_VAR_MAPPING
 from traceroot.credentials import CredentialManager
-from traceroot.logger import initialize_logger, shutdown_logger
+from traceroot.logger import (initialize_logger, log_verbose,
+                              log_verbose_error, shutdown_logger)
 from traceroot.utils.config import find_traceroot_config
 
 # Global state
@@ -73,7 +74,7 @@ def _load_env_config() -> dict[str, Any]:
             if config_field in [
                     "enable_span_console_export", "enable_log_console_export",
                     "enable_span_cloud_export", "enable_log_cloud_export",
-                    "local_mode"
+                    "local_mode", "tracer_verbose"
             ]:
                 env_config[config_field] = value.lower() in ('true', '1',
                                                              'yes', 'on')
@@ -139,15 +140,29 @@ def init(**kwargs: Any) -> TracerProvider:
 
     _config = config
 
+    log_verbose(
+        config, "Initializing TraceRoot with config:", {
+            "service_name": config.service_name,
+            "environment": config.environment,
+            "local_mode": config.local_mode,
+            "enable_span_console_export": config.enable_span_console_export,
+            "enable_span_cloud_export": config.enable_span_cloud_export,
+            "enable_log_console_export": config.enable_log_console_export,
+            "enable_log_cloud_export": config.enable_log_cloud_export,
+            "tracer_verbose": config.tracer_verbose
+        })
+
     # Initialize shared credential manager
     global _credential_manager
     _credential_manager = CredentialManager(config)
 
     # TODO(xinwei): separate logger initialization from tracer initialization.
     # Initialize logger first
+    log_verbose(config, "Initializing logger...")
     initialize_logger(config, _credential_manager)
 
     # Create resource with service information
+    log_verbose(config, "Creating OpenTelemetry resource...")
     resource = Resource(
         attributes={
             SERVICE_NAME: config.service_name,
@@ -159,25 +174,34 @@ def init(**kwargs: Any) -> TracerProvider:
         })
 
     # Create tracer provider
+    log_verbose(config, "Creating tracer provider...")
     provider = TracerProvider(resource=resource)
 
     # Add span processors based on configuration
     if config.enable_span_console_export:
+        log_verbose(config, "Adding console span processor...")
         console_processor = SimpleSpanProcessor(ConsoleSpanExporter())
         provider.add_span_processor(console_processor)
 
     # Only add cloud export if enabled
     if config.enable_span_cloud_export:
+        log_verbose(config, "Setting up cloud span export...")
         # Ensure we have fresh credentials and OTLP
         # endpoint before creating exporter
         if _credential_manager:
+            log_verbose(config, "Getting credentials for cloud export...")
             _credential_manager.get_credentials()
 
+        log_verbose(
+            config, f"Creating OTLP span exporter with endpoint: "
+            f"{config.otlp_endpoint}")
         exporter = OTLPSpanExporter(endpoint=config.otlp_endpoint)
         batch_processor = BatchSpanProcessor(exporter)
         provider.add_span_processor(batch_processor)
+        log_verbose(config, "Added batch span processor for cloud export")
 
     # Set as global tracer provider
+    log_verbose(config, "Setting global tracer provider...")
     otel_trace.set_tracer_provider(provider)
     _tracer_provider = provider
 
@@ -185,6 +209,7 @@ def init(**kwargs: Any) -> TracerProvider:
     # This is crucial for FastAPI to properly extract trace context from
     # HTTP headers
     # and create child spans instead of new root spans
+    log_verbose(config, "Configuring propagators for distributed tracing...")
     propagator = CompositePropagator([
         TraceContextTextMapPropagator(
         ),  # Handles traceparent/tracestate headers (W3C Trace Context)
@@ -192,6 +217,7 @@ def init(**kwargs: Any) -> TracerProvider:
     ])
     set_global_textmap(propagator)
 
+    log_verbose(config, "TraceRoot initialization completed successfully")
     return provider
 
 
@@ -205,6 +231,8 @@ def shutdown_tracing() -> None:
     global _tracer_provider, _config, _credential_manager
 
     if _tracer_provider is not None:
+        if _config and _config.tracer_verbose:
+            log_verbose(_config, "Shutting down tracing...")
         _tracer_provider.shutdown()
         _tracer_provider = None
         _config = None
@@ -247,6 +275,11 @@ def _trace(function: Callable, options: TraceOptions, *args: Any,
     """Internal context manager for tracing function execution"""
     # no-op if tracing is not initialized
     if not is_initialized():
+        if _config and _config.tracer_verbose:
+            log_verbose(
+                _config,
+                "Tracing not initialized, skipping trace for function:",
+                function.__name__)
         yield None
         return
 
@@ -257,10 +290,19 @@ def _trace(function: Callable, options: TraceOptions, *args: Any,
         # Get span name from options
         _span_name = options.get_span_name(function)
 
+        if _config and _config.tracer_verbose:
+            log_verbose(
+                _config, f"Starting span: {_span_name} for function: "
+                f"{function.__name__}")
+
         # Create and start new span
         _span = tracer.start_as_current_span(_span_name)
-    except Exception:
+    except Exception as e:
         # If span creation fails, yield None and continue without tracing
+        if _config and _config.tracer_verbose:
+            log_verbose_error(
+                _config,
+                f"Failed to create span for function {function.__name__}: {e}")
         yield None
         return
 
@@ -273,8 +315,17 @@ def _trace(function: Callable, options: TraceOptions, *args: Any,
         span.set_attribute("service_environment", _config.environment)
         span.set_attribute("telemetry_sdk_language", "python")
 
+        if _config and _config.tracer_verbose:
+            log_verbose(
+                _config,
+                f"Setting span attributes for function: {function.__name__}")
+
         # Add parameter attributes if requested
         if options.trace_params:
+            if _config and _config.tracer_verbose:
+                log_verbose(
+                    _config,
+                    f"Tracing parameters for function: {function.__name__}")
             parameter_values = _params_to_dict(
                 function,
                 options.trace_params,
