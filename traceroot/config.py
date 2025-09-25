@@ -45,6 +45,9 @@ class TraceRootConfig:
     # Verification endpoint
     verification_endpoint: str = DEFAULT_VERIFICATION_ENDPOINT
 
+    # Verbose logging for debugging
+    tracer_verbose: bool = False
+
     def __post_init__(self):
         self._name = self.name
         self._sub_name = (f"{self.service_name}-"

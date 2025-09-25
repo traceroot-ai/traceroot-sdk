@@ -13,6 +13,45 @@ from traceroot.config import TraceRootConfig
 from traceroot.credentials import CredentialManager
 
 
+def log_verbose(config: TraceRootConfig, message: str, *args: Any) -> None:
+    """Helper function for conditional verbose logging
+
+    Args:
+        config: TraceRootConfig instance
+        message: Log message to output
+        *args: Additional arguments to pass to logger
+    """
+    if config.tracer_verbose:
+        # Import here to avoid circular imports
+        from traceroot.logger import get_logger
+        try:
+            logger = get_logger()
+            logger.info(f"[TraceRoot] {message}", *args)
+        except RuntimeError:
+            # Fallback to print if logger not initialized yet
+            print(f"[TraceRoot] {message}", *args)
+
+
+def log_verbose_error(config: TraceRootConfig, message: str, *args:
+                      Any) -> None:
+    """Helper function for conditional verbose error logging
+
+    Args:
+        config: TraceRootConfig instance
+        message: Error message to output
+        *args: Additional arguments to pass to logger
+    """
+    if config.tracer_verbose:
+        # Import here to avoid circular imports
+        from traceroot.logger import get_logger
+        try:
+            logger = get_logger()
+            logger.error(f"[TraceRoot] {message}", *args)
+        except RuntimeError:
+            # Fallback to print if logger not initialized yet
+            print(f"[TraceRoot] ERROR: {message}", *args, file=sys.stderr)
+
+
 class TraceIdFilter(logging.Filter):
     """Filter to add trace and span IDs to log records"""
 
@@ -273,6 +312,7 @@ class TraceRootLogger:
         r"""Setup CloudWatch logging handler"""
         global _cloudwatch_handler
         try:
+            log_verbose(self.config, "Setting up CloudWatch handler...")
             # Fetch AWS credentials from the endpoint
             credentials = self.credential_manager.get_credentials()
             # Note: config is automatically updated by credential manager
@@ -283,9 +323,11 @@ class TraceRootLogger:
                 self.logger.addHandler(cloudwatch_handler)
                 # Store reference for proper shutdown
                 _cloudwatch_handler = cloudwatch_handler
-        except Exception:
+                log_verbose(self.config, "CloudWatch handler setup completed")
+        except Exception as e:
             # Silently handle credential fetch errors
-            pass
+            log_verbose_error(self.config,
+                              f"Failed to setup CloudWatch handler: {e}")
 
     def refresh_credentials(self) -> bool:
         """Manually refresh AWS credentials, update otlp endpoint
@@ -299,17 +341,25 @@ class TraceRootLogger:
         if self.config.local_mode or not self.config.enable_span_cloud_export:
             # No credentials needed in local mode or
             # when span cloud export is disabled
+            log_verbose(
+                self.config, f"Skipping credential refresh "
+                f"(local_mode={self.config.local_mode}, "
+                f"enable_span_cloud_export="
+                f"{self.config.enable_span_cloud_export})")
             return False
 
         try:
+            log_verbose(self.config, "Refreshing credentials...")
             # Force refresh credentials
             credentials = self.credential_manager.get_credentials(
                 force_refresh=True)
             if not credentials:
+                log_verbose_error(self.config, "Failed to get credentials")
                 return False
 
             # Only recreate CloudWatch handler if log cloud export is enabled
             if self.config.enable_log_cloud_export:
+                log_verbose(self.config, "Recreating CloudWatch handler...")
                 # Create new CloudWatch handler first (before removing old one)
                 new_cloudwatch_handler = self._create_cloudwatch_handler(
                     credentials)
@@ -329,11 +379,16 @@ class TraceRootLogger:
                     self.logger.addHandler(new_cloudwatch_handler)
                     # Store reference for proper shutdown
                     _cloudwatch_handler = new_cloudwatch_handler
+                    log_verbose(self.config,
+                                "CloudWatch handler recreated successfully")
 
+            log_verbose(self.config,
+                        "Credential refresh completed successfully")
             return True
 
-        except Exception:
+        except Exception as e:
             # Silently handle credential refresh errors
+            log_verbose_error(self.config, f"Credential refresh failed: {e}")
             return False
 
     def _setup_otlp_logging_handler(self):
