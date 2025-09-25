@@ -21,4 +21,5 @@ ENV_VAR_MAPPING = {
     "TRACEROOT_LOCAL_MODE": "local_mode",
     "TRACEROOT_VERIFICATION_ENDPOINT": "verification_endpoint",
     "TRACEROOT_TRACER_VERBOSE": "tracer_verbose",
+    "TRACEROOT_LOGGER_VERBOSE": "logger_verbose",
 }

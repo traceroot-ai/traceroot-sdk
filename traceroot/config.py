@@ -45,8 +45,11 @@ class TraceRootConfig:
     # Verification endpoint
     verification_endpoint: str = DEFAULT_VERIFICATION_ENDPOINT
 
-    # Verbose logging for debugging
+    # Verbose traces for debugging
     tracer_verbose: bool = False
+
+    # Verbose logging for debugging
+    logger_verbose: bool = False
 
     def __post_init__(self):
         self._name = self.name
