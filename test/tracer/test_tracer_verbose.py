@@ -2,10 +2,8 @@
 
 import io
 import os
-import sys
 import unittest
 from contextlib import redirect_stdout
-from unittest.mock import patch
 
 from traceroot import tracer
 
@@ -47,22 +45,26 @@ class TestTracerVerbose(unittest.TestCase):
 
         # Capture stdout to check for verbose output
         captured_output = io.StringIO()
-        
+
         with redirect_stdout(captured_output):
             # Initialize tracer with verbose logging enabled
             tracer.init()
-            
+
             # Get the config to verify tracer_verbose is True
             config = tracer.get_config()
             self.assertTrue(config.tracer_verbose)
-            
+
             # Check that verbose initialization messages were printed
             output = captured_output.getvalue()
-            self.assertIn("[TraceRoot-Tracer] Initializing TraceRoot with config:", output)
+            self.assertIn(
+                "[TraceRoot-Tracer] Initializing TraceRoot with config:",
+                output)
             self.assertIn("tracer_verbose", output)
 
     def test_verbose_logging_disabled(self):
-        """Test that verbose logging is suppressed when tracer_verbose is disabled"""
+        """Test that verbose logging is suppressed when tracer_verbose is
+        disabled
+        """
         # Set up environment variables with verbose disabled
         os.environ['TRACEROOT_TRACER_VERBOSE'] = 'false'
         os.environ['TRACEROOT_SERVICE_NAME'] = 'test-service'
@@ -72,18 +74,20 @@ class TestTracerVerbose(unittest.TestCase):
 
         # Capture stdout to check for verbose output
         captured_output = io.StringIO()
-        
+
         with redirect_stdout(captured_output):
             # Initialize tracer with verbose logging disabled
             tracer.init()
-            
+
             # Get the config to verify tracer_verbose is False
             config = tracer.get_config()
             self.assertFalse(config.tracer_verbose)
-            
+
             # Check that verbose initialization messages were NOT printed
             output = captured_output.getvalue()
-            self.assertNotIn("[TraceRoot-Tracer] Initializing TraceRoot with config:", output)
+            self.assertNotIn(
+                "[TraceRoot-Tracer] Initializing TraceRoot with config:",
+                output)
 
     def test_verbose_logging_with_trace_function(self):
         """Test that verbose logging works with the trace decorator"""
@@ -105,13 +109,15 @@ class TestTracerVerbose(unittest.TestCase):
         # Call the traced function - verbose output goes to logger, not stdout
         result = test_function()
         self.assertEqual(result, "test result")
-        
+
         # The test passes if no exception is raised and the function executes
-        # The verbose logging is verified by the fact that the tracer was initialized
-        # and the function was successfully traced
+        # The verbose logging is verified by the fact that the tracer was
+        # initialized and the function was successfully traced
 
     def test_logger_verbose_enabled(self):
-        """Test that logger verbose logging works when logger_verbose is enabled"""
+        """Test that logger verbose logging works when logger_verbose is
+        enabled
+        """
         # Set up environment variables
         os.environ['TRACEROOT_LOGGER_VERBOSE'] = 'true'
         os.environ['TRACEROOT_SERVICE_NAME'] = 'test-service'
@@ -121,22 +127,27 @@ class TestTracerVerbose(unittest.TestCase):
 
         # Capture stdout to check for verbose output
         captured_output = io.StringIO()
-        
+
         with redirect_stdout(captured_output):
             # Initialize tracer with logger verbose logging enabled
             tracer.init()
-            
+
             # Get the config to verify logger_verbose is True
             config = tracer.get_config()
             self.assertTrue(config.logger_verbose)
-            
+
             # Check that logger verbose initialization messages were printed
             output = captured_output.getvalue()
-            self.assertIn("[TraceRoot-Logger] Initializing TraceRoot logger...", output)
-            self.assertIn("[TraceRoot-Logger] Setting up logger with service name:", output)
+            self.assertIn(
+                "[TraceRoot-Logger] Initializing TraceRoot logger...", output)
+            self.assertIn(
+                "[TraceRoot-Logger] Setting up logger with service name:",
+                output)
 
     def test_logger_verbose_disabled(self):
-        """Test that logger verbose logging is suppressed when logger_verbose is disabled"""
+        """Test that logger verbose logging is suppressed when
+        logger_verbose is disabled
+        """
         # Set up environment variables with logger verbose disabled
         os.environ['TRACEROOT_LOGGER_VERBOSE'] = 'false'
         os.environ['TRACEROOT_SERVICE_NAME'] = 'test-service'
@@ -146,22 +157,28 @@ class TestTracerVerbose(unittest.TestCase):
 
         # Capture stdout to check for verbose output
         captured_output = io.StringIO()
-        
+
         with redirect_stdout(captured_output):
             # Initialize tracer with logger verbose logging disabled
             tracer.init()
-            
+
             # Get the config to verify logger_verbose is False
             config = tracer.get_config()
             self.assertFalse(config.logger_verbose)
-            
-            # Check that logger verbose initialization messages were NOT printed
+
+            # Check that logger verbose initialization messages were NOT
+            # printed
             output = captured_output.getvalue()
-            self.assertNotIn("[TraceRoot-Logger] Initializing TraceRoot logger...", output)
-            self.assertNotIn("[TraceRoot-Logger] Setting up logger with service name:", output)
+            self.assertNotIn(
+                "[TraceRoot-Logger] Initializing TraceRoot logger...", output)
+            self.assertNotIn(
+                "[TraceRoot-Logger] Setting up logger with service name:",
+                output)
 
     def test_both_verbose_enabled(self):
-        """Test that both tracer_verbose and logger_verbose can be enabled simultaneously"""
+        """Test that both tracer_verbose and logger_verbose can be enabled
+        simultaneously
+        """
         # Set up environment variables
         os.environ['TRACEROOT_TRACER_VERBOSE'] = 'true'
         os.environ['TRACEROOT_LOGGER_VERBOSE'] = 'true'
@@ -172,20 +189,23 @@ class TestTracerVerbose(unittest.TestCase):
 
         # Capture stdout to check for verbose output
         captured_output = io.StringIO()
-        
+
         with redirect_stdout(captured_output):
             # Initialize tracer with both verbose modes enabled
             tracer.init()
-            
+
             # Get the config to verify both verbose modes are True
             config = tracer.get_config()
             self.assertTrue(config.tracer_verbose)
             self.assertTrue(config.logger_verbose)
-            
+
             # Check that both tracer and logger verbose messages were printed
             output = captured_output.getvalue()
-            self.assertIn("[TraceRoot-Tracer] Initializing TraceRoot with config:", output)
-            self.assertIn("[TraceRoot-Logger] Initializing TraceRoot logger...", output)
+            self.assertIn(
+                "[TraceRoot-Tracer] Initializing TraceRoot with config:",
+                output)
+            self.assertIn(
+                "[TraceRoot-Logger] Initializing TraceRoot logger...", output)
             self.assertIn("tracer_verbose", output)
             self.assertIn("logger_verbose", output)
 
@@ -199,18 +219,20 @@ class TestTracerVerbose(unittest.TestCase):
 
         # Capture stdout to check for verbose output
         captured_output = io.StringIO()
-        
+
         with redirect_stdout(captured_output):
             # Initialize tracer without setting tracer_verbose
             tracer.init()
-            
+
             # Get the config to verify tracer_verbose defaults to False
             config = tracer.get_config()
             self.assertFalse(config.tracer_verbose)
-            
+
             # Check that verbose initialization messages were NOT printed
             output = captured_output.getvalue()
-            self.assertNotIn("[TraceRoot-Tracer] Initializing TraceRoot with config:", output)
+            self.assertNotIn(
+                "[TraceRoot-Tracer] Initializing TraceRoot with config:",
+                output)
 
 
 if __name__ == '__main__':
