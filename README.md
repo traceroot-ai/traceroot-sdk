@@ -12,7 +12,7 @@
 [![Documentation][docs-image]][docs-url]
 [![PyPI Version][pypi-image]][pypi-url]
 [![PyPI SDK Downloads][pypi-sdk-downloads-image]][pypi-sdk-downloads-url]
-[![TraceRoot.AI Website][company-website-image]][company-website-url]
+[![TraceRoot.AI Website](https://raw.githubusercontent.com/traceroot-ai/traceroot/refs/heads/main/misc/images/custom-website-badge.svg)][company-website-url]
 
 </div>
 
@@ -51,7 +51,6 @@ if __name__ == "__main__":
 
 Please reach out to founders@traceroot.ai if you have any questions.
 
-[company-website-image]: https://img.shields.io/badge/website-traceroot.ai-black
 [company-website-url]: https://traceroot.ai
 [docs-image]: https://img.shields.io/badge/docs-traceroot.ai-0dbf43
 [docs-url]: https://docs.traceroot.ai
