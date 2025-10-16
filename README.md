@@ -32,7 +32,7 @@ import asyncio
 
 logger = traceroot.get_logger()
 
-@traceroot.trace(name="greet")
+@traceroot.trace()
 async def greet(name: str) -> str:
     logger.info(f"Greeting inside traced function: {name}")
     # Simulate some async work
