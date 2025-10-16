@@ -1,6 +1,6 @@
 """Constants and configuration mappings for TraceRoot"""
 
-DEFAULT_VERIFICATION_ENDPOINT = "https://api.test.traceroot.ai/v1/verify/credentials"  # noqa: E501
+DEFAULT_VERIFICATION_ENDPOINT = "https://api.prod1.traceroot.ai/v1/verify/credentials"  # noqa: E501
 
 # Environment variable to config field mapping
 # Pattern: TRACEROOT_[CAPITALIZED_CONFIG_FIELD_NAME] -> config_field_name
