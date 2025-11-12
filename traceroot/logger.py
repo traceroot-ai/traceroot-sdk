@@ -57,9 +57,22 @@ class TraceIdFilter(logging.Filter):
             record.trace_id = f"1-{trace_id_hex[:8]}-{trace_id_hex[8:]}"
             record.span_id = format(ctx.span_id,
                                     "016x") if ctx.span_id != 0 else "no-span"
+
+            # Get parent span ID from span's parent context
+            parent_ctx = getattr(span, 'parent', None)
+            if parent_ctx and hasattr(parent_ctx,
+                                      'span_id') and parent_ctx.span_id != 0:
+                record.parent_span_id = format(parent_ctx.span_id, "016x")
+            else:
+                record.parent_span_id = "no-parent"  # Root span or no parent
+
+            # Get span name
+            record.span_name = getattr(span, 'name', 'unknown')
         else:
             record.trace_id = "no-trace"
             record.span_id = "no-span"
+            record.parent_span_id = "no-parent"
+            record.span_name = "unknown"
 
         # Add stack trace for debugging
         record.stack_trace = self._get_stack_trace()
@@ -167,6 +180,10 @@ class SpanEventHandler(logging.Handler):
                     attributes["log.trace_id"] = record.trace_id
                 if hasattr(record, 'span_id'):
                     attributes["log.span_id"] = record.span_id
+                if hasattr(record, 'parent_span_id'):
+                    attributes["log.parent_span_id"] = record.parent_span_id
+                if hasattr(record, 'span_name'):
+                    attributes["log.span_name"] = record.span_name
                 if hasattr(record, 'stack_trace'):
                     attributes["log.stack_trace"] = record.stack_trace
 
@@ -224,7 +241,8 @@ class TraceRootLogger:
             '%(asctime)s;%(levelname)s;%(service_name)s;'
             '%(github_commit_hash)s;%(github_owner)s;%(github_repo_name)s;'
             '%(environment)s;'
-            '%(trace_id)s;%(span_id)s;%(stack_trace)s;%(message)s')
+            '%(trace_id)s;%(span_id)s;%(stack_trace)s;%(message)s;'
+            '%(parent_span_id)s;%(span_name)s')
 
         # Create trace filter
         self.trace_filter = TraceIdFilter(config)
